@@ -267,7 +267,48 @@ button[type="submit"]:hover {
 /* Estilo para mensajes de respuesta después del envío */
 #response-message {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 20px; /* Espacio arriba del mensaje */
+    /* Comentado para permitir alineación a la izquierda en errores si es necesario */
+    /* text-align: center; */
     font-weight: bold;
     color: #4CAF50; /* Verde para mensajes de éxito */
+}
+
+/* Estilos para mensajes de error */
+#response-message.error {
+    /* Reiniciar la alineación para listas en errores */
+    /* text-align: left; /* Si quieres alinear todo a la izquierda en errores */
+    color: #CD5C5C; /* IndianRed - Rojo menos intenso para texto de error */
+    text-align: left; /* Asegurar que el texto de la lista se alinee a la izquierda */
+}
+
+/* Estilos para mensajes de advertencia */
+#response-message.warning {
+    text-align: left; /* Asegurar que el texto de la lista se alinee a la izquierda */
+    color: #ff9800; /* Naranja para texto de advertencia */
+}
+
+
+/* Estilos para ajustar el espaciado de las listas de error dentro del contenedor de mensajes */
+#response-message ul {
+    list-style-position: inside; /* Colocar la viñeta dentro del contenido */
+    /* Ajustes para controlar la indentación de la lista */
+    margin-left: 0; /* Eliminar margen izquierdo por defecto */
+    /* Puedes ajustar este valor si necesitas indentación para la lista principal */
+    /* margin-left: 20px; */
+    padding-left: 0; /* Remover padding por defecto */
+    /* text-align: left; */ /* Si necesitas forzar alineación a la izquierda solo para la lista */
+
+}
+
+#response-message li {
+    margin-bottom: 5px; /* Espacio entre items de la lista */
+}
+
+
+/* Estilos para listas ANIDADAS dentro del contenedor de mensajes */
+#response-message ul ul {
+    /* Añadir margen izquierdo adicional para indentar listas anidadas */
+    margin-left: 20px; /* Ajusta este valor para la indentación de las listas anidadas */
+    /* padding-left: 0; */ /* Opcional: remover padding en listas anidadas */
 }

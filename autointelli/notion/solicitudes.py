@@ -11,6 +11,7 @@ from .utils import update_notion_page_properties # submit_request_for_material_l
 from .proyectos import find_project_page_by_property_value # Importa la búsqueda de proyecto desde el nuevo módulo de proyectos
 
 from .constants import ( # Importa todas las constantes de propiedades que necesita
+    NOTION_PROP_ESTATUS, # <<< Importante importar esta constante
     NOTION_PROP_FOLIO,
     NOTION_PROP_SOLICITANTE,
     NOTION_PROP_FECHA_SOLICITUD,
@@ -165,6 +166,12 @@ def submit_request_for_material_logic(
         common_properties[NOTION_PROP_RECUPERADO] = {"checkbox": is_recuperado_bool}
         logger.info(f"{user_log_prefix}: Propiedad '{NOTION_PROP_RECUPERADO}' (Checkbox) agregada a common_properties con valor: {is_recuperado_bool}")
         # <<< FIN DE ADICIÓN PARA CHECKBOX RECUPERADO >>>
+
+        # 6. Añadir la propiedad ESTATUS (Select) a common_properties con valor por defecto "Pendiente"
+        # Usa la constante NOTION_PROP_ESTATUS para el nombre de la propiedad Select en Notion
+        # Asegúrate de que "Pendiente" es una opción válida en tu base de datos de Notion para esta propiedad.
+        common_properties[NOTION_PROP_ESTATUS] = {"select": {"name": "Pendiente"}}
+        logger.info(f"{user_log_prefix}: Propiedad '{NOTION_PROP_ESTATUS}' (Select) agregada a common_properties con valor: 'Pendiente'")
 
 
 
@@ -447,7 +454,7 @@ def submit_request_for_material_logic(
 
         if items_processed_count == total_items_intended:
              # Todos los items se procesaron correctamente en ambas DBs
-             final_response["message"] = f"Solicitud Folio '{folio_solicitud}' ({items_processed_count}/{total_items_intended} item(s)) registrada con éxito en ambas Bases de Datos de Notion."
+             final_response["message"] = f"Solicitud Folio '{folio_solicitud}' {items_processed_count}/{total_items_intended} item(s) registrada con éxito."
              status_code_return = 200
 
         elif items_processed_count > 0 and items_failed_count > 0:

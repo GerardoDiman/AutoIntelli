@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Declara las variables que se usarán dentro de este scope o en funciones definidas aquí.
     let allStandardDimensions = {}; // Se asignará en el .then() del fetch
     let currentFolio = null;
+    let submitBtn = null; // Declare submitBtn here to make it accessible
 
     // Obtener el proveedor por defecto de logística (del input oculto si existe, o un default)
     // Aquí el proveedor es fijo a "Por definir" según tu HTML, pero mantenemos la variable para claridad.
@@ -535,12 +536,12 @@ document.addEventListener('DOMContentLoaded', function() {
            if (!isValid) {
                 console.log("Validación fallida en frontend:", errores); // Log de depuración
                 const uniqueErrors = [...new Set(errores)]; // Eliminar duplicados
-                if (responseMessageDiv) { // Usa referencia DOM
-                    // Mostrar errores en lista con formato HTML para saltos de línea y lista
-                    // Use innerHTML as the message contains HTML tags for list items
-                    responseMessageDiv.innerHTML = "Por favor, corrige los siguientes errores:<br><ul>" + uniqueErrors.map(err => `<li>${err}</li>`).join('') + "</ul>";
-                    responseMessageDiv.classList.add('error'); // Añadir clase 'error' para el estilo
-                }
+               if (responseMessageDiv) { // Usa referencia DOM
+                   // Mostrar errores en lista con formato HTML para saltos de línea y lista
+                   // Use innerHTML as the message contains HTML tags for list items
+                   responseMessageDiv.innerHTML = "Por favor, corrige los siguientes errores:<br><ul>" + uniqueErrors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+                   responseMessageDiv.classList.add('error'); // Añadir clase 'error' para el estilo
+               }
                 // Intenta enfocar el primer campo de error visible y no deshabilitado
                  const primerErrorField = form.querySelector('.error-field:not(:disabled):not([type="hidden"]):not([readonly])'); // Enfocar solo campos interactivos
                  if(primerErrorField) primerErrorField.focus();
@@ -558,6 +559,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 responseMessageDiv.classList.add('processing'); // Añadir clase 'processing'
             }
 
+           if (submitBtn) submitBtn.disabled = true; // Disable button on submit start
+
            fetch(form.action, { // Usa form.action
                method: form.method, // Usa form.method (POST)
                headers: {
@@ -569,6 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
                console.log("Respuesta fetch del backend:", response); // Log de depuración
 
                 if (responseMessageDiv) responseMessageDiv.classList.remove('processing'); // Quitar clase 'processing'
+                if (submitBtn) submitBtn.disabled = false; // Re-enable button on response
 
                 if (!response.ok) {
                      // Attempt to parse error body as JSON
@@ -597,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
            })
            .then(data => {
                console.log('Respuesta backend exitosa:', data); // Log de depuración
+               if (submitBtn) submitBtn.disabled = false; // Re-enable button on success
 
                let feedbackMessage = "";
                let isSuccess = false; // True if the request was processed (message or warning), false if error
@@ -612,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
                if (responseMessageDiv) { // Usa referencia DOM
                    // If success (message or warning), show the message and link if exists
                    if (isSuccess) {
-                       responseMessageDiv.innerHTML = feedbackMessage + (firstUrl ? ` <a href="${firstUrl}" target="_blank" rel="noopener noreferrer">Ver Registro</a>` : '');
+                       responseMessageDiv.innerHTML = feedbackMessage + (firstUrl ? ` <a href="${firstUrl}" target="_blank" rel="noopener noreferrer" style="color: red;">Ver Registro</a>` : '');
                        responseMessageDiv.className = ''; // Clear previous classes
                        // Use success or warning class based on actual data structure
                        responseMessageDiv.classList.add(data.message ? 'success' : 'warning'); // Assume 'warning' if message field wasn't 'message' but 'warning'
@@ -651,6 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
            })
            .catch(error => {
                console.error('Error inesperado in fetch or processing:', error); // Log de depuración
+                if (submitBtn) submitBtn.disabled = false; // Re-enable button on error
 
                 if (responseMessageDiv) { // Usa referencia DOM
                     responseMessageDiv.classList.remove('processing');
@@ -702,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Deshabilitar el botón de submit initially until data is loaded
     if(materialForm) {
-        const submitBtn = materialForm.querySelector('button[type="submit"]');
+        submitBtn = materialForm.querySelector('button[type="submit"]'); // Assign to the variable declared earlier
         if (submitBtn) {
             submitBtn.disabled = true;
             console.log("Submit button disabled initially.");
@@ -746,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
              if(materialForm) {
-                 const submitBtn = materialForm.querySelector('button[type="submit"]');
+                 // Use the submitBtn variable from the DOMContentLoaded scope
                  if (submitBtn) submitBtn.disabled = false;
                  console.log("Submit button enabled after data load.");
              }

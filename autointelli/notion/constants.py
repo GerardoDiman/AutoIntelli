@@ -9,6 +9,7 @@ API_BASE_URL = "https://api.notion.com/v1"
 NOTION_PROP_FOLIO = "Folio de solicitud" # Asumiendo Rich Text
 NOTION_PROP_SOLICITANTE = "Nombre del solicitante" # Asumiendo Select
 NOTION_PROP_FECHA_SOLICITUD = "Fecha de solicitud" # Asumiendo Date
+NOTION_PROP_ESTATUS = "Estatus" # Asumiendo Select
 NOTION_PROP_PROVEEDOR = "Proveedor" # Asumiendo Select
 NOTION_PROP_DEPARTAMENTO = "Departamento/Área" # Asumiendo Select
 NOTION_PROP_URGENTE = "Urgente" # <<< Nombre EXACTO de la propiedad Checkbox
