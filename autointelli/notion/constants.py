@@ -12,6 +12,7 @@ NOTION_PROP_FECHA_SOLICITUD = "Fecha de solicitud" # Asumiendo Date
 NOTION_PROP_PROVEEDOR = "Proveedor" # Asumiendo Select
 NOTION_PROP_DEPARTAMENTO = "Departamento/Área" # Asumiendo Select
 NOTION_PROP_URGENTE = "Urgente" # <<< Nombre EXACTO de la propiedad Checkbox
+NOTION_PROP_RECUPERADO = "Recuperado"
 NOTION_PROP_MATERIALES_PROYECTO_RELATION = "Proyecto" # <<<< Nombre EXACTO de la propiedad RELATION en BD Materiales <<<<
 NOTION_PROP_ESPECIFICACIONES = "Especificaciones adicionales" # Asumiendo Rich Text
 

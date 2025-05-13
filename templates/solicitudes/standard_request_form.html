@@ -30,19 +30,42 @@
 
             <form id="standard-material-form" method="POST" action="{{ url_for('solicitudes.submit_standard_request') }}">
 
-                {# Campo Folio (oculto + display) #}
+                {# Fila 1: Folio, Fecha de Solicitud y Checkboxes - TODOS EN ESTA FILA (Se mantiene) #}
                 <input type="hidden" id="folio_solicitud" name="folio_solicitud">
-                <p class="folio-display">Folio: <span id="folio-display-value">Generando...</span></p>
+                <div class="form-row">
+                    {# Contenedor para Folio y Fecha #}
+                    <div class="info-fields">
+                        <div class="form-group">
+                            <label>Folio:</label>
+                            <span id="folio-display-value" class="readonly-field">Generando...</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_solicitud">Fecha de solicitud:</label>
+                            <input type="text" id="fecha_solicitud" name="fecha_solicitud" class="readonly-field" readonly>
+                        </div>
+                    </div>
+                    {# Contenedor para Checkboxes #}
+                    <div class="checkbox-fields">
+                        <div class="form-group checkbox-group">
+                             <input type="checkbox" id="urgente" name="urgente">
+                             <label for="urgente">Urgente</label>
+                        </div>
+                         <div class="form-group checkbox-group">
+                             <input type="checkbox" id="recuperado" name="recuperado">
+                             <label for="recuperado">Recuperado</label>
+                         </div>
+                    </div>
+                </div>
 
-                {# Campos ocultos (Proveedor y Departamento/Área) #}
-                <input type="hidden" name="proveedor" value="ProveedorLogistica">
+                {# Campos ocultos (Proveedor y Departamento/Área) - Se mantienen aquí #}
+                <input type="hidden" name="proveedor" value="Por definir">
                 <input type="hidden" name="departamento_area" value="Logística">
 
+                {# --- CAMPOS VISIBLES EN TRES COLUMNAS POR FILA (REORGANIZADOS) --- #}
 
-                {# --- CAMPOS VISIBLES EN DOS COLUMNAS --- #}
-
-                {# Fila 1: Nombre Solicitante (AUTOMÁTICO Y READONLY) y Fecha Solicitud #}
+                {# NUEVA Fila 1: Nombre Solicitante, Proyecto y Cantidad Solicitada #}
                 <div class="form-row">
+                    {# Nombre Solicitante (AUTOMÁTICO Y READONLY) #}
                     <div class="form-group">
                         <label for="nombre_solicitante">Nombre del solicitante:</label>
                         <input type="text"
@@ -51,27 +74,21 @@
                                value="{{ current_user_full_name }}"
                                readonly>
                     </div>
-                    {# CAMPO FECHA (Readonly) #}
-                    <div class="form-group">
-                        <label for="fecha_solicitud">Fecha de solicitud:</label>
-                        <input type="text" id="fecha_solicitud" name="fecha_solicitud" class="readonly-field" readonly>
-                    </div>
-                </div>
-
-                {# Fila 2: Proyecto y Cantidad Solicitada #}
-                <div class="form-row">
+                    {# Proyecto #}
                     <div class="form-group">
                         <label for="proyecto">Proyecto:</label>
                         <input type="text" id="proyecto" name="proyecto">
                     </div>
+                    {# Cantidad Solicitada (MOVIMOS ESTE CAMPO) #}
                     <div id="cantidad-unidad-group" class="form-group">
                         <label for="cantidad_solicitada">Cantidad solicitada:</label>
                         <input type="number" id="cantidad_solicitada" name="cantidad_solicitada" min="1" value="1">
                     </div>
                 </div>
 
-                {# Fila 3: Nombre Material y Tipo Material #}
+                {# NUEVA Fila 2: Nombre Material, Tipo Material y Unidad de Medida #}
                 <div class="form-row">
+                    {# Nombre Material #}
                     <div id="nombre-material-group" class="form-group">
                         <label for="nombre_material">Nombre del material:</label>
                         <select id="nombre_material" name="nombre_material" disabled>
@@ -79,15 +96,13 @@
                             {# Opciones pobladas por JS #}
                         </select>
                     </div>
+                    {# Tipo Material #}
                     <div id="tipo-material-group" class="form-group">
                         <label for="tipo_material">Tipo de material:</label>
                         <input type="text" id="tipo_material" name="tipo_material" readonly disabled>
                     </div>
-                </div>
-
-                {# Fila 4: Unidad de Medida #}
-                 <div class="form-row">
-                      <div id="unidad-medida-group" class="form-group" style="flex-basis: 50%;">
+                    {# Unidad de Medida (MOVIMOS ESTE CAMPO) #}
+                      <div id="unidad-medida-group" class="form-group"> {# Eliminamos style="flex-basis: 50%;" ya que flex: 1; en form-group lo manejará #}
                            <label for="unidad_medida">Unidad de medida:</label>
                            <select id="unidad_medida" name="unidad_medida">
                                <option value="" disabled selected>Seleccionar unidad:</option>
@@ -101,7 +116,7 @@
                        </div>
                  </div>
 
-                {# Grupo de Dimensiones #}
+                {# Grupo de Dimensiones - Se mantiene #}
                  <div id="dimensiones-container">
                     <h4>Dimensiones:</h4>
                     <div class="dimension-inputs">
@@ -112,23 +127,15 @@
                     </div>
                 </div>
 
-                 {# --- NUEVO: Campo de Checkbox para Urgencia --- #}
-                 {# Puedes envolver esto en un form-row si quieres, o dejarlo en su propio grupo #}
-                 <div class="form-group checkbox-group"> {# Usar una clase adicional si quieres estilos específicos para checkboxes #}
-                     {# El label se coloca DESPUÉS del input para poder usar el selector ~ o + si es necesario para estilos avanzados #}
-                     <input type="checkbox" id="urgente" name="urgente"> {# <<< Input Checkbox #}
-                     <label for="urgente">Solicitud Urgente</label> {# <<< Label para el Checkbox #}
-                 </div>
-                 {# --- FIN NUEVO --- #}
+                 {# Las casillas de checkbox se mantienen en la primera fila #}
 
-
-                {# Campo Especificaciones Adicionales (Opcional) #}
+                {# Campo Especificaciones Adicionales (Opcional) - Se mantiene #}
                 <div class="form-group">
                      <label for="especificaciones_adicionales">Especificaciones Adicionales (opcional):</label>
                      <textarea id="especificaciones_adicionales" name="especificaciones_adicionales"></textarea>
                 </div>
 
-                {# Botón de Envío #}
+                {# Botón de Envío - Se mantiene #}
                 <div class="button-container">
                     <button type="submit">Enviar Solicitud</button>
                 </div>
@@ -175,11 +182,11 @@
      {# Script opcional para auto-cerrar mensajes flash #}
      <script>
          document.addEventListener('DOMContentLoaded', () => {
-             // ... Tu script existente ...
+             // ... Tu script existente ...\
              if (!document.body.dataset.autoCloseFlashMessagesAdded) {
                  document.body.dataset.autoCloseFlashMessagesAdded = 'true';
-                 const autoCloseDelay = 5000; // 5 segundos
-                 const fadeOutDuration = 500; // 0.5 segundos
+                 const autoCloseDelay = 5000; // 5 segundos\
+                 const fadeOutDuration = 500; // 0.5 segundos\
                  const flashContainer = document.querySelector('#standard-request-wrapper .message-container');
                  if (flashContainer) {
                      const observer = new MutationObserver(mutationsList => {

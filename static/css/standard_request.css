@@ -1,369 +1,273 @@
 /* static/css/standard_request.css */
 
-/*
-   Este archivo define estilos específicos para el formulario de solicitud estándar (Logística).
-   Implementa el layout de columnas para campos y dimensiones.
-   Añade estilos para el campo de fecha readonly.
-   Reutiliza variables y estilos generales de formulario definidos en styles.css.
-*/
-
-/* --- Variables (Opcional si ya están en styles.css) --- */
-/* Copia el bloque :root de tu request_for_material.css aquí si tus variables no son globales */
-/* Idealmente, estas variables DEBERÍAN estar en static/css/styles.css */
-/*
-:root {
-    --primario: #D42D2E;
-    --blanco: #FFFFFF;
-    --gris-oscuro: #181A1B;
-    --gris-claro: #858585;
-    --gris: #313131;
-    --gris-t: #313131d5;
-    --input-bg-light: #fff;
-    --input-bg-dark: #3b3b3b;
-    --border-color-light: #ccc;
-    --border-color-dark: #555;
-    --text-color-light: #333;
-    --text-color-dark: #e0e0e0;
-    --label-color-light: #555;
-    --label-color-dark: #b0b0b0;
-    --shadow-light: rgba(0, 0, 0, 0.1);
-    --shadow-dark: rgba(255, 255, 255, 0.08);
-    --Orbitron: "Orbitron", sans-serif;
-    --Ubuntu: 'Ubuntu Sans Mono', monospace;
-    --header-height: 80px;
-    --transition-speed: 0.3s;
-
-    --success-bg: #2a573a; --success-text: #a7d7b4;
-    --error-bg: #4d2429; --error-text: #f1b0b7;
-    --info-bg: #1d3b5e; --info-text: #a8cffc;
-    --processing-text: #f0ad4e;
-    --warning-bg: #fff3cd; --warning-text: #856404;
-
-    --primary-hover-color: #b02122;
-    --select-arrow-light: "hsl(0, 0%, 20%)";
-    --select-arrow-dark: "hsl(0, 0%, 80%)";
-}
-*/
-
-
-/* --- Estilos para el WRAPPER principal (Posicionamiento y Espaciado) --- */
 #standard-request-wrapper {
-    display: flex; justify-content: center; align-items: center;
-    min-height: calc(100vh - var(--header-height, 80px));
-    padding: 20px; box-sizing: border-box;
+    max-width: 900px; /* Ancho máximo del contenedor principal */
+    margin: 20px auto; /* Centrar el contenedor y añadir margen arriba/abajo */
+    padding: 20px;
+    background-color: #2a2a2a; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Sombra para profundidad */
+    font-family: 'Roboto', sans-serif; /* Fuente amigable */
 }
 
-/* --- Estilos del Dark Mode para el WRAPPER --- */
-/* body.dark-mode #standard-request-wrapper { background-color: var(--bg-color-dark); } */
-
-
-/* --- Estilos para el CONTENEDOR INTERNO (El "Recuadro" principal) --- */
 #standard-request-wrapper .container {
-    max-width: 650px; width: 100%; margin: 0 auto;
-    padding: 30px 40px; background-color: var(--gris-t, #313131d5);
-    border-radius: 12px; box-shadow: 0 5px 20px var(--shadow-light, rgba(0, 0, 0, 0.1));
-    color: var(--text-color-light, #333); text-align: left; position: relative;
-    box-sizing: border-box;
-    transition: background-color var(--transition-speed, 0.3s) ease, box-shadow var(--transition-speed, 0.3s) ease, color var(--transition-speed, 0.3s) ease;
+    width: 100%; /* Usar todo el ancho disponible */
 }
 
-/* --- Estilos del Dark Mode para el CONTENEDOR INTERNO --- */
-body.dark-mode #standard-request-wrapper .container {
-    background-color: var(--container-bg-dark, #2c2c2c);
-    box-shadow: 0 5px 20px var(--shadow-dark, rgba(255, 255, 255, 0.08));
-    color: var(--text-color-dark, #e0e0e0);
+.titulo-pagina {
+    text-align: center;
+    color: #e53935; /* Rojo de AutoIntelli */
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e53935; /* Línea roja */
+    padding-bottom: 10px;
+    font-size: 1.8em; /* Tamaño de título */
 }
 
-
-/* --- Título de la Página --- */
-#standard-request-wrapper .container .titulo-pagina {
-    color: var(--primario, #D42D2E); text-align: center; font-family: var(--Orbitron, sans-serif);
-    font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 30px; border-bottom: 1px solid var(--primario, #D42D2E);
-    padding-bottom: 0.5rem; font-size: 2.4rem;
+/* Estilo para mensajes flash */
+.message-container {
+    margin-bottom: 20px;
 }
 
-/* Estilos para el párrafo del folio */
-#standard-request-wrapper .container p.folio-display {
-     margin-bottom: 20px; font-size: 1.4rem;
-     color: var(--gris-claro, #858585); text-align: center;
+.flash-message {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
 }
-#standard-request-wrapper .container p.folio-display span {
-     font-weight: bold; color: var(--text-color-light, #333);
-     body.dark-mode & { color: var(--text-color-dark, #e0e0e0); }
+
+.flash-message.fade-out {
+    opacity: 0;
 }
 
 
-/* --- Estilos de Filas y Grupos de Formulario (IMPLEMENTAR COLUMNAS) --- */
-#standard-request-wrapper .container .form-row {
-    display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 15px;
-    align-items: flex-start;
+.flash-message.success {
+    background-color: #4CAF50; /* Verde */
+    color: white;
 }
 
-#standard-request-wrapper .container .form-row .form-group {
-    flex: 1; min-width: 200px; margin-bottom: 0;
+.flash-message.error {
+    background-color: #f44336; /* Rojo */
+    color: white;
 }
 
-
-/* --- Labels --- */
-#standard-request-wrapper .container label {
-    display: block; margin-bottom: 5px; font-weight: 600;
-    color: var(--label-color-light, #555); text-transform: uppercase; letter-spacing: 0.5px;
-    transition: color var(--transition-speed) ease; font-size: 0.9em;
-}
-/* Estilo Dark Mode para Labels */
-body.dark-mode #standard-request-wrapper .container label { color: var(--label-color-dark, #b0b0b0); }
-
-
-/* --- Inputs, Selects, Textareas --- */
-#standard-request-wrapper .container input[type="text"],
-#standard-request-wrapper .container input[type="number"],
-#standard-request-wrapper .container input[type="date"],
-#standard-request-wrapper .container input[type="email"],
-#standard-request-wrapper .container input[type="password"],
-#standard-request-wrapper .container select,
-#standard-request-wrapper .container textarea {
-    width: 100%; padding: 10px; border: 1px solid var(--border-color-light, #ccc); border-radius: 6px;
-    box-sizing: border-box; font-size: 16px; font-family: var(--Ubuntu, sans-serif);
-    background-color: var(--input-bg-light, #fff); color: var(--text-color-light, #333);
-    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease, border-color var(--transition-speed) ease;
-    line-height: 1.5;
+.flash-message.warning {
+    background-color: #ff9800; /* Naranja */
+    color: white;
 }
 
-/* Estilos Dark Mode para Inputs, Selects, Textareas */
-body.dark-mode #standard-request-wrapper .container input[type="text"],
-body.dark-mode #standard-request-wrapper .container input[type="number"],
-body.dark-mode #standard-request-wrapper .container input[type="date"],
-body.dark-mode #standard-request-wrapper input[type="email"],
-body.dark-mode #standard-request-wrapper input[type="password"],
-body.dark-mode #standard-request-wrapper .container select,
-body.dark-mode #standard-request-wrapper .container textarea {
-    background-color: var(--input-bg-dark, #3b3b3b);
-    border-color: var(--border-color-dark, #555);
-    color: var(--text-color-dark, #e0e0e0);
+/* Estilos para el formulario */
+#standard-material-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre filas y grupos */
 }
 
-/* Estilos de focus */
-#standard-request-wrapper .container input:focus,
-#standard-request-wrapper .container select:focus,
-#standard-request-wrapper .container textarea:focus {
-    outline: none; border-color: var(--primario, #D42D2E); box-shadow: 0 0 0 2px rgba(212, 45, 46, 0.3);
+.form-row {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    gap: 20px; /* Espacio entre grupos dentro de la fila */
+    align-items: center; /* Alinea verticalmente los elementos */
 }
 
-/* Estilos específicos para Selects (flecha) */
-#standard-request-wrapper .container select {
-    padding-right: 30px; appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    background-repeat: no-repeat; background-position: right 10px center;
-    background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="hsl(0, 0%, 20%)" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><path d="M1395 736q0 13-10 23l-466 466q-10 10-23 10t-23-10l-466-466q-10-10-10-23t10-23l50-50q10-10 23-10t23 10l393 393 393-393q10-10 23-10t23 10l50 50q10 10 10 23z"/></svg>');
-}
-/* Estilos Dark Mode para la flecha del Select */
-body.dark-mode #standard-request-wrapper .container select {
-    background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="hsl(0, 0%, 80%)" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><path d="M1395 736q0 13-10 23l-466 466q-10 10-23 10t-23-10l-466-466q-10-10-10-23t10-23l50-50q10-10 23-10t23 10l393 393 393-393q10-10 23-10t23 10l50 50q10 10 10 23z"/></svg>');
+.form-group {
+    flex: 1; /* Permite que los grupos crezcan y ocupen el espacio disponible */
+    display: flex;
+    flex-direction: column; /* Apila label e input/select */
 }
 
-/* Estilos para el checkbox */
-#standard-request-wrapper .container input[type="checkbox"] {
-    width: auto; margin-right: 5px; accent-color: var(--primario); cursor: pointer; transform: scale(1.2);
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #b0b0b0; /* Color para las etiquetas */
 }
 
-/* Estilos para el textarea */
-#standard-request-wrapper .container textarea { height: 100px; resize: vertical; }
-
-
-/* --- Estilos de Campos Deshabilitados (READONLY o DISABLED) --- */
-/* Los inputs deshabilitados heredan estos estilos */
-#standard-request-wrapper .container input:disabled,
-#standard-request-wrapper .container select:disabled,
-#standard-request-wrapper .container textarea:disabled { /* Omitimos readonly aquí */
-    background-color: #e9ecef; color: #6c757d; cursor: not-allowed; opacity: 0.7; border-color: var(--border-color-light);
-    body.dark-mode & { background-color: #3a3f44; color: #adb5bd; border-color: var(--border-color-dark); }
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+    padding: 10px;
+    border: 1px solid #555; /* Borde oscuro */
+    border-radius: 4px;
+    background-color: #3a3a3a; /* Fondo de campos oscuro */
+    color: #e0e0e0; /* Texto en campos claro */
+    font-size: 1em;
+    width: 100%; /* Asegurar que ocupen el ancho de su contenedor flex item */
+    box-sizing: border-box; /* Incluir padding y borde en el tamaño */
 }
 
-/* Estilos para campos readonly que NO están deshabilitados */
-/* Esto aplica a input de texto para la fecha de hoy. */
-#standard-request-wrapper .container input[readonly].readonly-field {
-    /* Hereda estilos de input general, pero los anula o modifica */
-    background-color: transparent;  /* Fondo transparente */
-    border: none;  /* Sin borde */
-    font-style: normal;
-    color: var(--text-color-light, #333); /* Color de texto */
-    padding-left: 0;
-    padding-right: 0;
-    cursor: default; /* Quitar cursor de texto */
-    width: auto;     /* Ocupar solo el ancho del texto */
-    font-weight: bold; /* Resaltar */
-    font-size: 1em; /* Tamaño normal del texto */
-    text-align: left; /* Alinear a la izquierda */
-
-     /* Remover estilos de focus */
-     &:focus {
-        outline: none; box-shadow: none; border-color: transparent;
-     }
-
-     /* Estilos Dark Mode */
-     body.dark-mode & {
-          color: var(--text-color-dark, #e0e0e0);
-     }
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #e53935; /* Resaltar con color de AutoIntelli al enfocar */
+    outline: none; /* Remover el outline por defecto */
 }
 
-/* --- Estilos de la Sección Dimensiones --- */
-#standard-request-wrapper .container #dimensiones-container {
-    margin-top: 25px; margin-bottom: 0; padding: 20px;
-    border: 1px solid var(--border-color-light); border-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.02);
-    transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
-}
-/* Estilos Dark Mode para el contenedor de dimensiones */
-body.dark-mode #standard-request-wrapper .container #dimensiones-container {
-     background-color: rgba(255, 255, 255, 0.03);
-     border-color: var(--border-color-dark);
+.form-group textarea {
+    min-height: 100px; /* Altura mínima para el área de texto */
+    resize: vertical; /* Permite redimensionar verticalmente */
 }
 
-/* Título dentro del contenedor de dimensiones */
-#standard-request-wrapper .container #dimensiones-container h4 {
-    padding: 0; margin-top: 0; margin-bottom: 15px;
-    color: var(--gris-claro); font-weight: 600; font-size: 1em;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    transition: color var(--transition-speed) ease; text-align: left;
-}
-/* Estilo Dark Mode para el título de dimensiones */
-body.dark-mode #standard-request-wrapper .container #dimensiones-container h4 { color: var(--label-color-dark); }
-
-/* Estilos para la fila de inputs de dimensiones (.dimension-inputs) */
-#standard-request-wrapper .container #dimensiones-container .dimension-inputs {
-    display: grid; /* Usar Grid para un layout de columnas más controlado */
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); /* 4 columnas flexibles, ancho mínimo 80px */
-    gap: 15px; /* Espacio entre columnas */
-    align-items: start; /* Alinea los elementos arriba si tienen alturas diferentes */
+/* Estilo específico para campos readonly */
+.readonly-field {
+    background-color: #4a4a4a !important; /* Fondo un poco más oscuro para readonly */
+    color: #b0b0b0 !important; /* Texto atenuado */
+    cursor: not-allowed; /* Indicador de que no es editable */
+    padding: 10px; /* Asegurar que el span tenga padding como los inputs */
+    border: 1px solid #555; /* Borde similar a los inputs */
+    border-radius: 4px; /* Bordes redondeados */
+    display: inline-block; /* Para que padding y border funcionen correctamente */
+    width: 100%; /* Ocupar el ancho de su contenedor flex item */
+    box-sizing: border-box; /* Incluir padding y borde en el tamaño */
+    line-height: 1.5; /* Ajustar la altura de línea */
 }
 
-/* Estilos para los grupos de inputs de dimensiones (.form-group dentro de .dimension-inputs) */
-#standard-request-wrapper .container #dimensiones-container .dimension-inputs .form-group {
-     margin-bottom: 0;
+/* Estilo para el grupo de Dimensiones */
+#dimensiones-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #555; /* Borde para separar visualmente */
+    border-radius: 8px;
+    background-color: #333; /* Fondo ligeramente diferente */
 }
 
-/* Estilos para los inputs de dimensiones */
-#standard-request-wrapper .container #dimensiones-container input[type="text"] {
-    width: 100%;
+#dimensiones-container h4 {
+    margin-top: 0;
+    color: #e53935; /* Color de AutoIntelli */
+    margin-bottom: 15px;
 }
 
-
-/* --- Campo Especificaciones Adicionales (en su propio .form-group) --- */
-/* Ya hereda estilos de .form-group y textarea generales */
-#standard-request-wrapper .container .form-group textarea {
-     width: 100%;
+.dimension-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; /* Espacio entre campos de dimensión */
 }
 
-
-/* --- Contenedor del Botón de Envío --- */
-#standard-request-wrapper .container .button-container {
-     margin-top: 30px; text-align: center;
+.dimension-inputs .form-group {
+    flex: 1; /* Permite que cada campo de dimensión ocupe espacio */
+    min-width: 120px; /* Ancho mínimo para cada campo */
 }
 
-
-/* --- Botón Principal de Envío --- */
-#standard-request-wrapper .container button[type="submit"] {
-    background-color: var(--primario, #D42D2E); color: var(--blanco, #FFFFFF);
-    padding: 12px 20px; border: none; border-radius: 6px;
-    cursor: pointer; font-size: 18px; font-weight: bold;
-    transition: background-color var(--transition-speed) ease, transform 0.1s ease;
-    display: block; width: 100%;
-    font-family: var(--Ubuntu, sans-serif); text-transform: uppercase; letter-spacing: 1px;
-}
-#standard-request-wrapper .container button[type="submit"]:hover { background-color: var(--primary-hover-color, #b02122); }
-#standard-request-wrapper .container button[type="submit"]:active { transform: scale(0.98); }
-#standard-request-wrapper .container button[type="submit"]:disabled {
-    background-color: #555; cursor: not-allowed; opacity: 0.7;
+/* Estilo para el grupo de checkbox */
+.checkbox-group {
+     display: flex; /* Usar flexbox para alinear input y label */
+     align-items: center; /* Alinear verticalmente - ESTO AYUDA A CENTRAR*/
+     gap: 5px; /* Espacio entre el checkbox y la etiqueta */
+     flex-direction: row; /* Alinear horizontalmente */
 }
 
+/* Ocultar el checkbox nativo */
+.checkbox-group input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
 
-/* --- Contenedor de Mensajes de Respuesta AJAX --- */
-#standard-request-wrapper .container #response-message {
-    margin-top: 25px; padding: 15px; border-radius: 6px; text-align: center;
-    font-size: 1.5rem; min-height: 50px; display: flex; align-items: center;
-    justify-content: center; border: 1px solid transparent;
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    word-break: break-word;
+/* Estilo para la etiqueta (el checkbox visual) */
+.checkbox-group label {
+    position: relative;
+    padding-left: 25px; /* Espacio para el checkbox personalizado */
+    margin-bottom: 0; /* Eliminar margen inferior */
+    cursor: pointer;
+    font-weight: normal; /* Fuente normal para las etiquetas de checkbox */
+    color: #e0e0e0; /* Color de texto normal */
+    /* display: inline-block; */ /* Asegurar que se muestren en línea */
+    /* user-select: none; /* Evitar selección de texto al hacer click */
+     line-height: 24px; /* !CAMBIO AQUÍ! Ajustar altura de línea al tamaño del checkbox */
 }
-#standard-request-wrapper .container #response-message.processing {
-    border-color: var(--processing-text, #f0ad4e); color: var(--processing-text, #f0ad4e);
-    background-color: rgba(240, 173, 78, 0.1);
+
+/* Crear la caja del checkbox personalizado (pseudo-elemento ::before) */
+.checkbox-group label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0; /* !Puede que necesitemos ajustar 'top' si line-height no es suficiente */
+    width: 18px; /* Tamaño de la caja del checkbox */
+    height: 18px; /* Tamaño de la caja del checkbox */
+    border: 2px solid #b0b0b0; /* Borde de la caja */
+    background-color: #3a3a3a; /* Fondo de la caja */
+    border-radius: 3px; /* Bordes ligeramente redondeados */
+    transition: all 0.2s ease; /* Transición suave */
 }
-#standard-request-wrapper .container #response-message.success {
-    background-color: var(--success-bg, #2a573a); color: var(--success-text, #a7d7b4);
-    border-color: var(--success-text, #a7d7b4);
+
+/* Estilo cuando el checkbox nativo está marcado */
+.checkbox-group input[type="checkbox"]:checked + label::before {
+    border-color: #e53935; /* Borde rojo cuando está marcado */
+    background-color: #e53935; /* Fondo rojo cuando está marcado */
 }
-#standard-request-wrapper .container #response-message.error {
-    background-color: var(--error-bg, #4d2429); color: var(--error-text, #f1b0b7);
-    border-color: var(--error-text, #f1b0b7);
+
+/* Crear el checkmark (pseudo-elemento ::after) */
+.checkbox-group label::after {
+    content: '';
+    position: absolute;
+    left: 6px; /* Ajustar posición del checkmark */
+    top: 3px; /* Ajustar posición del checkmark - Puede que necesitemos ajustar este también */
+    width: 6px; /* Ancho del checkmark */
+    height: 10px; /* Altura del checkmark */
+    border: solid white; /* Color del checkmark (blanco para contraste) */
+    border-width: 0 2px 2px 0; /* Estilo del borde para crear el checkmark */
+    transform: rotate(45deg); /* Rotar para formar el checkmark */
+    opacity: 0; /* Ocultar por defecto */
+    transition: opacity 0.2s ease; /* Transición suave */
 }
-#standard-request-wrapper .container #response-message.warning {
-    background-color: var(--warning-bg, #fff3cd); color: var(--warning-text, #856404);
-    border-color: var(--warning-text, #ffeeba);
+
+/* Mostrar el checkmark cuando el checkbox nativo está marcado */
+.checkbox-group input[type="checkbox"]:checked + label::after {
+    opacity: 1; /* Mostrar el checkmark */
 }
-#standard-request-wrapper .container #response-message a {
-    color: inherit; text-decoration: underline; font-weight: bold; margin-left: 5px;
+
+/* Estilos para los nuevos contenedores dentro de la primera fila */
+.form-row .info-fields {
+    display: flex; /* Usar flexbox para los campos de info */
+    gap: 20px; /* Espacio entre Folio y Fecha */
+    flex: 2; /* Darle más espacio a los campos de info */
+    align-items: center; /* Alinear verticalmente */
+}
+
+.form-row .checkbox-fields {
+    display: flex; /* Usar flexbox para los checkboxes */
+    flex-direction: row; /* Alinear horizontalmente */
+    gap: 15px; /* Espacio horizontal entre checkboxes */
+    flex: 1; /* Darle espacio a los campos de checkbox */
+    align-items: center; /* !CAMBIO AQUÍ! Asegurar alineación vertical en el contenedor */
+    justify-content: flex-end; /* Alinear los checkboxes a la derecha */
+}
+
+.info-fields .form-group {
+    flex: 1; /* Permitir que Folio y Fecha ocupen espacio dentro de su contenedor */
 }
 
 
-/* --- Estilos para Mensajes Flash de Flask --- */
-#standard-request-wrapper .container .message-container {
-    position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-    width: calc(100% - 80px); max-width: calc(600px - 80px);
-    z-index: 1050; display: flex; flex-direction: column; align-items: center; gap: 10px;
-}
-#standard-request-wrapper .container .flash-message {
-    padding: 12px 18px; border: 1px solid transparent; border-radius: 6px; text-align: center;
-    width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.15); opacity: 1;
-    transition: opacity 0.5s ease-out, transform 0.3s ease-out; font-size: 1.4rem;
-    color: var(--blanco); background-color: var(--gris);
-}
-#standard-request-wrapper .container .flash-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-text); }
-#standard-request-wrapper .container .flash-message.danger { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-text); }
-#standard_request-wrapper .container .flash-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-text); }
-#standard-request-wrapper .container .flash-message.warning { background-color: var(--warning-bg); color: var(--warning-text); border-color: var(--warning-text); }
-.flash-message.fade-out { opacity: 0; transform: translateY(-20px); }
-
-
-/* --- Estilos Ocultos --- */
-.oculto { display: none !important; }
-
-/* Estilo para campos "N/A" */
-.na-field { font-style: italic; color: var(--gris-claro); }
-
-/* --- Media Queries --- */
-@media (max-width: 768px) {
-    #standard-request-wrapper .container {
-        padding: 25px 30px; width: 98%;
-        max-width: calc(768px - (20px * 2));
-    }
-    #standard-request-wrapper .container .titulo-pagina { font-size: 2rem; }
-    /* En pantallas más pequeñas, puedes hacer que las filas de 2 columnas se apilen */
-    #standard-request-wrapper .container .form-row { flex-direction: column; gap: 15px; }
-    #standard-request-wrapper .container .form-row .form-group { min-width: 100%; flex-basis: auto; margin-bottom: 0; }
-
-    /* Y la fila de dimensiones se apile en 2 columnas */
-    #standard-request-wrapper .container #dimensiones-container .dimension-inputs {
-         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* 2 columnas */
-    }
-     #standard-request-wrapper .container #dimensiones-container .dimension-inputs .form-group { margin-bottom: 0; }
-
-    #standard-request-wrapper .container button[type="submit"] { font-size: 1.5rem; padding: 10px 25px; }
-    #standard-request-wrapper .container #response-message { font-size: 1.3rem; padding: 12px; }
-    #standard-request-wrapper .container .message-container { width: calc(100% - 60px); max-width: none; }
+/* Estilo para el botón de envío */
+.button-container {
+    display: flex;
+    justify-content: center; /* Centrar el botón horizontalmente */
+    margin-top: 20px;
 }
 
-@media (max-width: 480px) {
-    #standard-request-wrapper .container { padding: 20px 25px; width: 100%; max-width: unset; }
-    #standard-request-wrapper .container .titulo-pagina { font-size: 1.8rem; margin-bottom: 20px; }
-    #standard-request-wrapper .container label { font-size: 1.2rem; }
-    #standard-request-wrapper .container input, #standard-request-wrapper .container select, #standard_request-wrapper .container textarea { font-size: 1.3rem; padding: 8px 10px; }
-    #standard-request-wrapper .container button[type="submit"] { font-size: 1.4rem; padding: 9px 20px; }
-    #standard-request-wrapper .container #response-message { font-size: 1.2rem; padding: 10px; }
-    #standard_request-wrapper .container .message-container { top: 10px; width: calc(100% - 50px); max-width: unset; }
-     /* En pantallas muy pequeñas, las dimensiones se apilen en 1 columna */
-     #standard-request-wrapper .container #dimensiones-container .dimension-inputs {
-         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* 1 columna */
-     }
-      #standard_request-wrapper .container #dimensiones-container .dimension-inputs .form-group { margin-bottom: 15px; }
+button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #e53935; /* Color de AutoIntelli */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #f44336; /* Un rojo ligeramente más claro al pasar el mouse */
+}
+
+/* Estilo para mensajes de respuesta después del envío */
+#response-message {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #4CAF50; /* Verde para mensajes de éxito */
 }

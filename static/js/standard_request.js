@@ -6,7 +6,7 @@
 
 // --- Variables Globales (Constantes que NO dependen del DOM o init en DOMContentLoaded) ---
 // Estas pueden estar fuera del DOMContentLoaded
-const materialesPorProveedor = { "Mipsa": ["D2", "Cobre", "Aluminio"], "LBO": ["H13", "1018", "4140T"], "Grupo Collado": ["D2", "4140T", "H13", "1018", "Acetal"], "Cameisa": ["Aluminio", "Cobre", "Acetal", "Nylamid"], "Surcosa": ["1018", "Nylamid", "Acetal", "D2"], "Diace": ["D2", "H13", "Aluminio", "4140T", "Cobre", "1018"], "ProveedorLogistica": ["D2", "Cobre", "Aluminio", "H13", "1018", "4140T", "Acetal", "Nylamid"] };
+const materialesPorProveedor = { "Mipsa": ["D2", "Cobre", "Aluminio"], "LBO": ["H13", "1018", "4140T"], "Grupo Collado": ["D2", "4140T", "H13", "1018", "Acetal"], "Cameisa": ["Aluminio", "Cobre", "Acetal", "Nylamid"], "Surcosa": ["1018", "Nylamid", "Acetal", "D2"], "Diace": ["D2", "H13", "Aluminio", "4140T", "Cobre", "1018"], "Por definir": ["D2", "Cobre", "Aluminio", "H13", "1018", "4140T", "Acetal", "Nylamid"] };
 const tipoPorMaterial = { "D2": "Metal", "Aluminio": "Metal", "Cobre": "Metal", "4140T": "Metal", "H13": "Metal", "1018": "Metal", "Acetal": "Plastico", "Nylamid": "Plastico" };
 
 
@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFolio = null;
 
     // Obtener el proveedor por defecto de logística (del input oculto si existe, o un default)
-    // Aquí el proveedor es fijo a "ProveedorLogistica" según tu HTML, pero mantenemos la variable para claridad.
-    const DEFAULT_PROVEVEDOR_LOGISTICA = proveedorInputHidden ? proveedorInputHidden.value : 'ProveedorLogistica';
+    // Aquí el proveedor es fijo a "Por definir" según tu HTML, pero mantenemos la variable para claridad.
+    const DEFAULT_PROVEVEDOR_LOGISTICA = proveedorInputHidden ? proveedorInputHidden.value : 'Por definir';
 
 
     // --- Funciones que DEPENDEN de Elementos del DOM o Variables Definidas AQUÍ (>>> DEFINIR AQUÍ <<<) ---

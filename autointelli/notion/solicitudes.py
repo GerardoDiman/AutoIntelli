@@ -17,6 +17,8 @@ from .constants import ( # Importa todas las constantes de propiedades que neces
     NOTION_PROP_PROVEEDOR,
     NOTION_PROP_DEPARTAMENTO,
     NOTION_PROP_URGENTE, # <<< Importante importar esta constante
+    NOTION_PROP_RECUPERADO,
+ # <<< Importante importar esta constante
     NOTION_PROP_MATERIALES_PROYECTO_RELATION,
     NOTION_PROP_ESPECIFICACIONES,
     NOTION_PROP_CANTIDAD,
@@ -141,7 +143,29 @@ def submit_request_for_material_logic(
         # Usa la constante NOTION_PROP_URGENTE para el nombre de la propiedad Checkbox en Notion
         common_properties[NOTION_PROP_URGENTE] = {"checkbox": is_urgent_bool}
         logger.info(f"{user_log_prefix}: Propiedad '{NOTION_PROP_URGENTE}' (Checkbox) agregada a common_properties con valor: {is_urgent_bool}")
-        # <<< FIN DE MODIFICACIÓN PARA CHECKBOX URGENTE >>>
+
+        # 5. Añadir la propiedad RECUPERADO (Checkbox) a common_properties
+        # Obtener el valor del campo 'recuperado' del diccionario data. Asumimos que la clave es 'recuperado'.
+        recuperado_value_raw = data.get("recuperado", False) # Default a False si la clave no existe
+
+        # Convertir el valor a booleano de forma robusta para manejar varios tipos de entrada (igual que urgente)
+        is_recuperado_bool = False # Valor booleano final para la propiedad Checkbox
+        if isinstance(recuperado_value_raw, bool):
+            is_recuperado_bool = recuperado_value_raw # Si ya es booleano (ej. de JSON)
+        elif isinstance(recuperado_value_raw, str):
+             # Convierte strings como "true", "false", "1", "0" a booleano (case-insensitive)
+             is_recuperado_bool = recuperado_value_raw.lower() in ['true', 'yes', 'on', '1']
+        elif isinstance(recuperado_value_raw, (int, float)):
+             # Convierte números: 0 es False, cualquier otro número es True
+             is_recuperado_bool = bool(recuperado_value_raw)
+        # Para None u otros tipos, is_recuperado_bool se queda en su valor inicial False.
+
+        # Añadir la propiedad 'Recuperado' a common_properties con el valor booleano resultante
+        # Usa la constante NOTION_PROP_RECUPERADO para el nombre de la propiedad Checkbox en Notion
+        common_properties[NOTION_PROP_RECUPERADO] = {"checkbox": is_recuperado_bool}
+        logger.info(f"{user_log_prefix}: Propiedad '{NOTION_PROP_RECUPERADO}' (Checkbox) agregada a common_properties con valor: {is_recuperado_bool}")
+        # <<< FIN DE ADICIÓN PARA CHECKBOX RECUPERADO >>>
+
 
 
         # 5. Añadir las propiedades comunes restantes del diccionario data
