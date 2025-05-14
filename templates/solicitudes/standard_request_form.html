@@ -105,13 +105,8 @@
                       <div id="unidad-medida-group" class="form-group"> {# Eliminamos style="flex-basis: 50%;" ya que flex: 1; en form-group lo manejará #}
                            <label for="unidad_medida">Unidad de medida:</label>
                            <select id="unidad_medida" name="unidad_medida">
-                               <option value="" disabled selected>Seleccionar unidad:</option>
-                               {# Opciones del JSON cargadas por JS #}
-                                <option value="Milímetros">Milímetros</option>
-                                <option value="Pulgadas">Pulgadas</option>
-                                <option value="Centimetros">Centimetros</option>
-                                <option value="Metros">Metros</option>
-                                <option value="Piezas">Piezas</option>
+                               <option value="Pulgadas" selected>Pulgadas</option>
+                               <option value="Milímetros">Milímetros</option>
                            </select>
                        </div>
                  </div>
