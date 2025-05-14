@@ -7,7 +7,7 @@ import json
 import traceback # Para el error general
 
 # Importar funciones auxiliares y constantes
-from .utils import update_notion_page_properties, find_partida_by_id # Importa la búsqueda de partida (find_partida_by_id)
+from .utils import update_notion_page_properties, find_partida_by_id # Importa la búsqueda de partida
 from .proyectos import find_project_page_by_property_value # Importa la búsqueda de proyecto (find_project_page_by_property_value) si se necesita en otras funciones.
 
 from .constants import ( # Importa todas las constantes de propiedades que necesita
@@ -44,6 +44,7 @@ def submit_request_for_material_logic(
         database_id_db1: str, # ID de la primera BD de Materiales
         database_id_db2: str, # ID de la segunda BD de Materiales
         database_id_partidas: str, # ID de la BD de Partidas para la Relation
+        database_id_proyectos: str, # ID de la BD de Proyectos para la Relation
         data: Dict, # Diccionario con los datos de la solicitud del frontend
         user_id: Optional[int] = None # Opcional: ID del usuario para logging/trazabilidad
     ) -> Tuple[Dict, int]:
@@ -67,7 +68,7 @@ def submit_request_for_material_logic(
         logger.info(f"{user_log_prefix} Prefijo de log actualizado.")
 
         # Validar IDs de bases de datos esenciales
-        if not notion_client or not database_id_db1 or not database_id_db2 or not database_id_partidas:
+        if not notion_client or not database_id_db1 or not database_id_db2 or not database_id_partidas or not database_id_proyectos:
              error_msg = "La integración con Notion para Solicitudes o Partidas no está configurada correctamente en el servidor (IDs o cliente Notion faltante)."
              logger.error(f"{user_log_prefix} {error_msg}")
              # Este es un problema de configuración del backend, no de la solicitud del usuario.
@@ -100,16 +101,37 @@ def submit_request_for_material_logic(
              else:
                   logger.warning(f"{user_log_prefix}: No se encontró página de partida para '{partida_valor_frontend}'. La propiedad Relation '{NOTION_PROP_MATERIALES_PROYECTO_RELATION}' en las páginas de Notion quedará vacía.")
 
-        # Prepara el payload para la propiedad Relation 'Proyecto' que se usará en las páginas de materiales
+        # 3. Manejar la propiedad del Proyecto (extraer ID de Partida, buscar Proyecto y preparar Relation)
+        project_relation_property_payload_for_db = {"relation": []} # Relación de Proyecto vacía por defecto (formato API Notion)
+        project_page_id = None # Variable para guardar el ID de la página de proyecto encontrada
+
+        # Extraer los primeros 7 caracteres (XX-XXXX) del ID de partida si se encontró una partida
+        if partida_valor_frontend and len(partida_valor_frontend) >= 7: # Verifica que el string tiene al menos 7 caracteres antes de slicing
+            project_id_from_partida = partida_valor_frontend[:7]
+            logger.debug(f"{user_log_prefix}: Extrayendo ID de proyecto de la partida: \'{project_id_from_partida}\'")
+
+            # Busca la página del proyecto usando el ID extraído
+            if database_id_proyectos: # Asegúrate de que el ID de la BD de Proyectos esté configurado.
+                 logger.info(f"{user_log_prefix}: Buscando ID de página para proyecto: \'{project_id_from_partida}\' usando propiedad \'{NOTION_PROP_PROYECTO_BUSQUEDA_ID}\' en BD Proyectos...")
+                 project_page_id = find_project_page_by_property_value(
+                     notion_client,
+                     database_id_proyectos,
+                     NOTION_PROP_PROYECTO_BUSQUEDA_ID, # Nombre de la propiedad en BD Proyectos
+                     project_id_from_partida # El valor de búsqueda extraído de la partida
+                 )
+
+                 if project_page_id:
+                      logger.info(f"{user_log_prefix}: ID de página de proyecto encontrado: {project_page_id}")
+                      # Si se encontró un ID de página de proyecto, crea el payload de Relation con ese ID
+                      project_relation_property_payload_for_db = {"relation": [{"id": project_page_id}]} # Este payload ahora tiene el ID del proyecto
+
+
+        # Prepara el payload para la propiedad Relation 'Partida' que se usará en las páginas de materiales
         # Se añadirá a common_properties. Si no se encontró partida_page_id, será una Relation vacía.
-        project_relation_property_payload = {"relation": []} # Relación vacía por defecto (formato API Notion)
+        partida_relation_property_payload = {"relation": []} # Relación de partida vacía por defecto (formato API Notion)
         if partida_page_id:
             # Si se encontró un ID de página de partida, crea el payload de Relation con ese ID
-            project_relation_property_payload = {"relation": [{"id": partida_page_id}]}
-        # common_properties se inicializará más abajo e incluirá esto.
-
-
-        # 3. Inicializar common_properties (Propiedades que aplican a toda la solicitud/todos los items)
+            partida_relation_property_payload = {"relation": [{"id": partida_page_id}]}
         # Estas propiedades se incluirán en CADA página creada para cada item.
         common_properties = {}
 
@@ -118,9 +140,15 @@ def submit_request_for_material_logic(
              # Asegúrate de usar el tipo de propiedad correcto para el Folio. Si es Rich Text:
              common_properties[NOTION_PROP_FOLIO] = {"rich_text": [{"type": "text", "text": {"content": folio_solicitud}}]}
 
-        # Añadir la propiedad Relation del Proyecto (usando la constante correcta para la DB de Materiales)
-        common_properties[NOTION_PROP_MATERIALES_PROYECTO_RELATION] = project_relation_property_payload
-        logger.debug(f"{user_log_prefix}: Propiedad Relation de Proyecto agregada a common_properties.")
+        # Añadir la propiedad Relation de la Partida (usando la constante correcta para la DB de Materiales)
+        # NOTION_PROP_MATERIALES_PROYECTO_RELATION ahora mapea a la propiedad 'Partida'
+        common_properties[NOTION_PROP_MATERIALES_PROYECTO_RELATION] = partida_relation_property_payload # Esto es para la Partida
+        logger.debug(f"{user_log_prefix}: Propiedad Relation de Partida agregada a common_properties.")
+
+        # Ahora añadir la propiedad Relation del Proyecto (usando el nombre 'Proyecto' confirmado)
+        # La propiedad se llama 'Proyecto' en DB1/DB2 y el payload ya fue construido arriba (project_relation_property_payload_for_db)
+        common_properties['Proyecto'] = project_relation_property_payload_for_db # Añade la relación a Proyecto
+        logger.debug(f"{user_log_prefix}: Propiedad Relation de Proyecto agregada a common_properties con payload: {project_relation_property_payload_for_db}")
 
         # 4. Añadir la propiedad URGENTE (Checkbox) a common_properties
         # Obtener el valor del campo 'es_urgente' del diccionario data. Asumimos que la clave es 'es_urgente'.
@@ -172,8 +200,7 @@ def submit_request_for_material_logic(
         logger.info(f"{user_log_prefix}: Propiedad '{NOTION_PROP_ESTATUS}' (Select) agregada a common_properties con valor: 'Pendiente'")
 
 
-
-        # 5. Añadir las propiedades comunes restantes del diccionario data
+        # 5. Añadir las propiedades comunes restantes del diccionario data (Solicitante, Proveedor, Departamento, Fecha Solicitud, Especificaciones)
         # Solicitante, Proveedor, Departamento/Área (ASUMIMOS SELECT)
         solicitante_val = data.get("nombre_solicitante", "")
         if solicitante_val:

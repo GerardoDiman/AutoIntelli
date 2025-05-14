@@ -57,6 +57,7 @@ def submit_standard_request():
     database_id_db2 = current_app.config.get('DATABASE_ID_MATERIALES_DB2')
     # Obtener ID de la BD de Partidas de la configuración
     database_id_partidas = current_app.config.get('DATABASE_ID_PARTIDAS')
+    database_id_proyectos = current_app.config.get('DATABASE_ID_PROYECTOS') # Obtener ID de la BD de Proyectos
 
 
     # *** VALIDACIÓN DE IDs DE BASE DE DATOS Y CLIENTE NOTION ***
@@ -102,7 +103,7 @@ def submit_standard_request():
     for field in required_fields_basic:
         value = data.get(field)
         # Check for None or empty string after strip.
- # Note: Para campos numéricos o Selects que deberían tener un valor, value podría ser None o 0/""
+        # Note: Para campos numéricos o Selects que deberían tener un valor, value podría ser None o 0/""
         if value is None or (isinstance(value, str) and not value.strip()):
              missing_fields_basic.append(field)
 
@@ -117,13 +118,13 @@ def submit_standard_request():
 
 
     if missing_fields_basic:
-         error_msg = f"Faltan campos obligatorios o son inválidos: {', '.join(missing_fields_basic)}".replace('proyecto', 'partida') # Reemplaza 'proyecto' por 'partida' en el mensaje de error
-         # --- LÍNEA MODIFICADA PARA MAYOR ROBUSTEZ EN EL LOG ---
-         log_message = f"[{current_user.username if current_user.is_authenticated else 'Unauthenticated'}] {error_msg}. "
-         log_message += "Datos recibidos: " + json.dumps(data, ensure_ascii=False)
-         logger.warning(log_message)
-         # --- FIN LÍNEA MODIFICADA ---
-         return jsonify({"error": error_msg}), 400 # Bad Request
+        error_msg = f"Faltan campos obligatorios o son inválidos: {', '.join(missing_fields_basic)}".replace('proyecto', 'partida') # Reemplaza 'proyecto' por 'partida' en el mensaje de error
+        # --- LÍNEA MODIFICADA PARA MAYOR ROBUSTEZ EN EL LOG ---
+        log_message = f"[{current_user.username if current_user.is_authenticated else 'Unauthenticated'}] {error_msg}. "
+        log_message += "Datos recibidos: " + json.dumps(data, ensure_ascii=False)
+        logger.warning(log_message)
+        # --- FIN LÍNEA MODIFICADA ---
+        return jsonify({"error": error_msg}), 400 # Bad Request
 
 
     # La validación de dimensiones (conjunto completo, conflicto) y la validación más detallada del proyecto (existencia en Notion)
@@ -150,9 +151,10 @@ def submit_standard_request():
     response_data, status_code = submit_request_for_material_logic(
         notion_client,
         database_id_db1,
- database_id_db2,
- database_id_partidas, # <<<< PASAR EL ID DE PARTIDAS AQUÍ <<<<
-        data, # Pasar el diccionario data completo (con todos los campos recolectados del frontend)
+        database_id_db2,
+        database_id_partidas,
+        database_id_proyectos,  # Obtener y pasar el ID de la BD de Proyectos
+        data=data, # Pasar el diccionario data completo (con todos los campos recolectados del frontend) como argumento con nombre
         user_id=current_user.id if current_user.is_authenticated else None # Pasar el ID del usuario logueado
     )
 
