@@ -14,7 +14,7 @@ NOTION_PROP_PROVEEDOR = "Proveedor" # Asumiendo Select
 NOTION_PROP_DEPARTAMENTO = "Departamento/Área" # Asumiendo Select
 NOTION_PROP_URGENTE = "Urgente" # <<< Nombre EXACTO de la propiedad Checkbox
 NOTION_PROP_RECUPERADO = "Recuperado"
-NOTION_PROP_MATERIALES_PROYECTO_RELATION = "Proyecto" # <<<< Nombre EXACTO de la propiedad RELATION en BD Materiales <<<<
+NOTION_PROP_MATERIALES_PROYECTO_RELATION = "Partida" # <<<< Nombre EXACTO de la propiedad RELATION en BD Materiales (vincula a Partidas) <<<<
 NOTION_PROP_ESPECIFICACIONES = "Especificaciones adicionales" # Asumiendo Rich Text
 
 NOTION_PROP_CANTIDAD = "Cantidad solicitada" # Asumiendo Number
@@ -34,4 +34,9 @@ NOTION_PROP_TORNI_DESCRIPTION = "Descripción" # Asumiendo Rich Text
 # --- Propiedades en Base de Datos de PROYECTOS ---
 # *** NOTION_PROP_PROYECTO_BUSQUEDA_ID: El nombre de la propiedad en tu BD de PROYECTOS que usas para IDENTIFICAR UN PROYECTO (ej. "Número de Proyecto", "Código", "Nombre") ***
 NOTION_PROP_PROYECTO_BUSQUEDA_ID = "ID del proyecto" # <<<< Nombre EXACTO de la propiedad para BUSCAR en BD Proyectos <<<<
+
+# --- Propiedades en Base de Datos de PARTIDAS ---
+# El nombre de la propiedad en tu BD de PARTIDAS que usas para IDENTIFICAR UNA PARTIDA
+NOTION_PROP_PARTIDA_BUSQUEDA_ID = "ID de partida" # <<<< Nombre EXACTO de la propiedad para BUSCAR en BD Partidas <<<<
+# --- Fin Nombres de Propiedad ---
 # --- Fin Nombres de Propiedad ---

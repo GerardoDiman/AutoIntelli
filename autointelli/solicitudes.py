@@ -55,18 +55,18 @@ def submit_standard_request():
     notion_client = current_app.notion_client
     database_id_db1 = current_app.config.get('DATABASE_ID_MATERIALES_DB1')
     database_id_db2 = current_app.config.get('DATABASE_ID_MATERIALES_DB2')
-    # *** NUEVO: Obtener ID de la BD de Proyectos de la configuración ***
-    database_id_proyectos = current_app.config.get('DATABASE_ID_PROYECTOS')
-    # *** FIN NUEVO ***
+    # Obtener ID de la BD de Partidas de la configuración
+    database_id_partidas = current_app.config.get('DATABASE_ID_PARTIDAS')
+
 
     # *** VALIDACIÓN DE IDs DE BASE DE DATOS Y CLIENTE NOTION ***
     # Si alguno de los IDs de bases de datos necesarios o el cliente Notion no está configurado,
     # no podemos procesar la solicitud relacionada con Notion.
-    if notion_client is None or not database_id_db1 or not database_id_db2 or not database_id_proyectos: # <<<< Incluye database_id_proyectos en la verificación
-         error_msg = "La integración con Notion para Solicitudes o Proyectos no está configurada correctamente (IDs de bases de datos o cliente Notion faltantes)."
-         logger.error(f"[{current_user.username if current_user.is_authenticated else 'Unauthenticated'}] {error_msg}. IDs: DB1='{database_id_db1}', DB2='{database_id_db2}', Proyectos='{database_id_proyectos}'")
-         # Devolver un error 503 (Service Unavailable) indica un problema del servidor/configuración
-         return jsonify({"error": error_msg}), 503
+    if notion_client is None or not database_id_db1 or not database_id_db2 or not database_id_partidas: # <<<< Incluye database_id_partidas en la verificación
+        error_msg = "La integración con Notion para Solicitudes o Partidas no está configurada correctamente (IDs de bases de datos o cliente Notion faltantes)."
+        logger.error(f"[{current_user.username if current_user.is_authenticated else 'Unauthenticated'}] {error_msg}. IDs: DB1='{database_id_db1}', DB2='{database_id_db2}', Partidas='{database_id_partidas}'")
+        # Devolver un error 503 (Service Unavailable) indica un problema del servidor/configuración
+        return jsonify({"error": error_msg}), 503
 
 
     # Obtener los datos JSON enviados en el cuerpo de la solicitud POST
@@ -94,16 +94,15 @@ def submit_standard_request():
     # 'tipo_material' es llenado por JS basándose en el material, asumido presente si nombre_material no está vacío.
     # 'proyecto' se valida la existencia en Notion dentro de submit_request_for_material_logic.
     # 'especificaciones_adicionales' es opcional.
-
     # Campos que esperamos recibir y no deberían estar completamente vacíos/nulos del frontend
-    required_fields_basic = ['nombre_solicitante', 'cantidad_solicitada', 'nombre_material', 'unidad_medida', 'proyecto'] # Incluimos proyecto aquí para asegurar que al menos se envió algo
+    required_fields_basic = ['nombre_solicitante', 'cantidad_solicitada', 'nombre_material', 'unidad_medida', 'partida'] # Incluimos partida aquí para asegurar que al menos se envió algo
 
     missing_fields_basic = []
 
     for field in required_fields_basic:
         value = data.get(field)
         # Check for None or empty string after strip.
-        # Note: Para campos numéricos o Selects que deberían tener un valor, value podría ser None o 0/""
+ # Note: Para campos numéricos o Selects que deberían tener un valor, value podría ser None o 0/""
         if value is None or (isinstance(value, str) and not value.strip()):
              missing_fields_basic.append(field)
 
@@ -113,12 +112,12 @@ def submit_standard_request():
     if cantidad is not None and (not isinstance(cantidad, (int, float)) or cantidad <= 0):
         # Si cantidad ya se marcó como faltante, removemos ese mensaje y añadimos el específico.
         if 'cantidad_solicitada' in missing_fields_basic:
-             missing_fields_basic.remove('cantidad_solicitada')
-        missing_fields_basic.append('cantidad_solicitada (debe ser un número > 0)')
+            missing_fields_basic.remove('cantidad_solicitada')
+            missing_fields_basic.append('cantidad_solicitada (debe ser un número > 0)')
 
 
     if missing_fields_basic:
-         error_msg = f"Faltan campos obligatorios o son inválidos: {', '.join(missing_fields_basic)}"
+         error_msg = f"Faltan campos obligatorios o son inválidos: {', '.join(missing_fields_basic)}".replace('proyecto', 'partida') # Reemplaza 'proyecto' por 'partida' en el mensaje de error
          # --- LÍNEA MODIFICADA PARA MAYOR ROBUSTEZ EN EL LOG ---
          log_message = f"[{current_user.username if current_user.is_authenticated else 'Unauthenticated'}] {error_msg}. "
          log_message += "Datos recibidos: " + json.dumps(data, ensure_ascii=False)
@@ -128,7 +127,7 @@ def submit_standard_request():
 
 
     # La validación de dimensiones (conjunto completo, conflicto) y la validación más detallada del proyecto (existencia en Notion)
-    # se manejan dentro de submit_request_for_material_logic.
+    # se manejan dentro de submit_request_for_material_logic (ahora con 'partida').
 
 
     # Asegúrate de que el diccionario data NO incluye 'torni_items' si el proveedor no es Torni.
@@ -151,8 +150,8 @@ def submit_standard_request():
     response_data, status_code = submit_request_for_material_logic(
         notion_client,
         database_id_db1,
-        database_id_db2,
-        database_id_proyectos, # <<<< PASAR EL ID DE PROYECTOS AQUÍ <<<<
+ database_id_db2,
+ database_id_partidas, # <<<< PASAR EL ID DE PARTIDAS AQUÍ <<<<
         data, # Pasar el diccionario data completo (con todos los campos recolectados del frontend)
         user_id=current_user.id if current_user.is_authenticated else None # Pasar el ID del usuario logueado
     )

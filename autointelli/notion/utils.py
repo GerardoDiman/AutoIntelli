@@ -4,6 +4,7 @@ from datetime import datetime, timedelta # Aunque estas utils no los usan direct
 from notion_client import Client
 from notion_client.errors import APIResponseError
 from typing import Optional, Dict, List, Tuple, Any, Union
+from autointelli.notion.constants import NOTION_PROP_MATERIALES_PROYECTO_RELATION, NOTION_PROP_PARTIDA_BUSQUEDA_ID # Importar constantes
 import json
 import traceback # Aunque estas utils no usan traceback, se mantuvo en el original. Puede que no sea estrictamente necesario aquí, pero no hace daño.
 
@@ -210,3 +211,281 @@ def build_filter_from_properties_util(notion_client: Client, database_id: str, p
              pass
     # logger.debug(f"Filtros construidos final: {json.dumps(filters, ensure_ascii=False)}") # Muy verbose
     return filters
+
+
+def find_partida_by_id(notion_client: Client, database_id_partidas: str, partida_id: str) -> Optional[Dict]:
+    """
+    Busca una página en la base de datos de Partidas por su 'ID de partida'.
+    Retorna la primera página encontrada o None.
+    """
+    if not notion_client or not database_id_partidas or not partida_id:
+        logger.error("Cliente de Notion, Database ID de Partidas o ID de partida faltante para la búsqueda.")
+        return None
+
+    logger.debug(f"find_partida_by_id: Buscando partida con ID: '{partida_id}'")
+    logger.info(f"Buscando Partida con ID '{partida_id}' en la base de datos '{database_id_partidas}'.")
+
+    # Definir el nombre de la propiedad en Notion que contiene el ID de partida
+    # Asumimos que la propiedad se llama exactamente 'ID de partida' y es de tipo texto o similar.
+    partida_id_property_name = 'ID de partida'
+
+    # Crear el filtro para buscar la propiedad 'ID de partida' igual al valor proporcionado
+    # Necesitamos obtener el tipo de propiedad real de Notion para usar create_filter_condition_util
+    # O crear el filtro directamente si asumimos que es texto (rich_text/title)
+    # Opción simple: asumir que es rich_text/title y usar 'equals'
+    # Consideramos 'rich_text' o 'title' ya que 'ID de partida' suele ser un identificador único.
+    # Usaremos 'rich_text' con 'equals' para coincidencia exacta.
+    filters = [{ "property": partida_id_property_name, "rich_text": { "equals": partida_id.strip() } }]
+
+    # Ejecutar la consulta con el filtro
+    found_pages = get_pages_with_filter_util(notion_client, database_id_partidas, filters=filters, page_size=1) # Solo necesitamos 1 resultado
+
+    # Retornar la primera página encontrada o None
+    return found_pages[0] if found_pages else None
+
+# Función actualizada para retornar solo el ID de la página
+def find_partida_by_id(notion_client: Client, database_id_partidas: str, partida_id: str) -> Optional[str]:
+    """
+    Busca una página en la base de datos de Partidas por su 'ID de partida'.
+    Retorna el ID de la primera página encontrada (como string) o None.
+    """
+    if not notion_client or not database_id_partidas or not partida_id:
+        logger.error("Cliente de Notion, Database ID de Partidas o ID de partida faltante para la búsqueda.")
+        return None
+
+    logger.info(f"Buscando Partida con ID '{partida_id}' en la base de datos '{database_id_partidas}'.")
+
+    # Definir el nombre de la propiedad en Notion que contiene el ID de partida
+    # Usamos la constante para el nombre de la propiedad de búsqueda de partidas.
+    partida_id_property_name = NOTION_PROP_PARTIDA_BUSQUEDA_ID # << Usar la constante
+
+    # Crear el filtro para buscar la propiedad 'ID de partida' igual al valor proporcionado
+    # Asumimos que la propiedad 'ID de partida' es de tipo Rich Text o Title en Notion.
+    # Usamos 'equals' para una coincidencia exacta del ID.
+    filters = [{ "property": partida_id_property_name, "rich_text": { "equals": partida_id.strip() } }]
+
+    # Ejecutar la consulta con el filtro
+    logger.debug(f"find_partida_by_id: Filtro construido: {json.dumps(filters, ensure_ascii=False)}")
+    found_pages = get_pages_with_filter_util(notion_client, database_id_partidas, filters=filters, page_size=1) # Solo necesitamos 1 resultado
+
+    # Si se encontró una página, extrae su ID y retornalo como string.
+    logger.debug(f"find_partida_by_id: Páginas encontradas: {len(found_pages)}")
+    # Si no se encontró ninguna página, found_pages estará vacío y retornamos None.
+    if found_pages and isinstance(found_pages, list) and len(found_pages) > 0:
+        # La respuesta de la API para una página en found_pages[0] es un diccionario con la clave 'id'
+        return found_pages[0].get("id") # Extrae el ID como string
+    else:
+        logger.warning(f"No se encontró ninguna página en la base de datos de Partidas con ID '{partida_id}'.")
+        return None
+
+def submit_request_for_material_logic(
+    notion_client: Client,
+    data: Dict,
+    database_id_db1: str,
+    database_id_db2: str,
+    database_id_partidas: str, # Nuevo argumento para el ID de la base de datos de Partidas
+    current_user_full_name: str,
+    user_id: str # Para vincular al usuario de la app
+):
+    """
+    Procesa la solicitud estándar de material, valida datos, busca la partida en Notion,
+    y crea páginas en las dos bases de datos de materiales (DB1 y DB2) en Notion.
+    """
+    logger.info("Iniciando procesamiento de solicitud estándar de material.")
+
+    # --- 1. Validar y extraer datos del diccionario 'data' ---
+    # Los nombres de las claves deben coincidir con los nombres esperados del frontend.
+    # Asegurarse de que 'partida' se extrae aquí en lugar de 'proyecto'.
+    folio_solicitud = data.get('folio_solicitud')
+    fecha_solicitud_str = data.get('fecha_solicitud') # Viene como 'YYYY-MM-DD' del frontend
+    urgente = data.get('urgente', False)
+    recuperado = data.get('recuperado', False)
+    nombre_solicitante = data.get('nombre_solicitante')
+    partida_id_from_form = data.get('partida') # Extraer el ID de partida del formulario
+    cantidad_solicitada = data.get('cantidad_solicitada') # Debería ser un número (float o int)
+    nombre_material = data.get('nombre_material')
+    unidad_medida = data.get('unidad_medida')
+    tipo_material = data.get('tipo_material') # Asumimos que lo envía el frontend basado en material
+
+    # Dimensiones - pueden ser string (vacío, 'N/A') o numérico si el frontend validó.
+    largo = data.get('largo')
+    ancho = data.get('ancho')
+    alto = data.get('alto')
+    diametro = data.get('diametro')
+
+    especificaciones_adicionales = data.get('especificaciones_adicionales')
+    proveedor_logistica = data.get('proveedor') # Viene de campo oculto en HTML, fijo a 'ProveedorLogistica'
+    departamento_logistica = data.get('departamento_area') # Viene de campo oculto, fijo a 'Logística'
+
+    # Validaciones básicas de presencia. La validación detallada de dimensiones y existencia de partida/material ocurre más abajo.
+    # Asegurarse de que 'partida_id_from_form' sea validado como requerido.
+    if not all([folio_solicitud, fecha_solicitud_str, nombre_solicitante, partida_id_from_form,
+                cantidad_solicitada, nombre_material, unidad_medida]):
+        logger.error("Datos de formulario estándar incompletos.")
+        missing_fields = [k for k, v in data.items() if v is None or (isinstance(v, str) and v.strip() == '') and k in ['folio_solicitud', 'fecha_solicitud', 'nombre_solicitante', 'partida', 'cantidad_solicitada', 'nombre_material', 'unidad_medida']]
+        return 400, {"error": f"Datos de formulario incompletos. Campos faltantes: {', '.join(missing_fields)}"}
+
+    # Convertir fecha_solicitud_str a formato ISO 8601 para Notion (solo la fecha)
+    try:
+        # Si la fecha viene en 'YYYY-MM-DD', ya es un formato válido para el campo Date de Notion (sin hora).
+        # Si necesitara ser un objeto datetime, usar: fecha_solicitud_dt = datetime.strptime(fecha_solicitud_str, '%Y-%m-%d')
+        fecha_solicitud_iso = fecha_solicitud_str # Ya está en el formato correcto para Notion Date property (YYYY-MM-DD)
+    except ValueError:
+        logger.error(f"Formato de fecha inválido recibido: {fecha_solicitud_str}")
+        return 400, {"error": "Formato de fecha de solicitud inválido."}
+
+    # Asegurarse de que cantidad_solicitada es un número
+    try:
+        cantidad_solicitada_num = float(cantidad_solicitada)
+        if cantidad_solicitada_num <= 0:
+             logger.error(f"Cantidad solicitada inválida: {cantidad_solicitada}. Debe ser > 0.")
+             return 400, {"error": "Cantidad solicitada debe ser un número positivo."}
+    except (ValueError, TypeError):
+        logger.error(f"Cantidad solicitada no es un número válido: {cantidad_solicitada}")
+        return 400, {"error": "Cantidad solicitada inválida. Debe ser un número."}
+
+    # --- 2. Buscar la Partida en Notion ---
+    # Usar la función find_partida_by_id que creamos anteriormente.
+    partida_page = find_partida_by_id(notion_client, database_id_partidas, partida_id_from_form)
+    
+    if not partida_page:
+        logger.warning(f"Partida con ID '{partida_id_from_form}' no encontrada en la base de datos de Partidas.")
+        # Podrías decidir si esto es un error fatal o un warning. Para solicitudes estándar, asumimos que la partida debe existir.
+        return 404, {"error": f"La Partida con ID '{partida_id_from_form}' no fue encontrada en Notion. Por favor, verifica el ID."}
+
+    partida_page_id = partida_page.get("id")
+    logger.info(f"Partida encontrada: ID de página de Notion '{partida_page_id}' para ID de partida '{partida_id_from_form}'.")
+
+    # --- 3. Preparar los payloads de propiedades para las nuevas páginas de Materiales (DB1 y DB2) ---    
+    # NOTA: Los nombres de las propiedades (keys del diccionario 'properties') deben coincidir
+    # EXACTAMENTE con los nombres definidos en tus bases de datos de Notion.
+    # Asumimos que ambas bases de datos (DB1 y DB2) tienen nombres de propiedades compatibles.
+
+    # Propiedades comunes a ambas bases de datos.
+    # Incluir la relación con la Partida encontrada.
+    common_properties = {
+        "Folio Solicitud": {"rich_text": [{"text": {"content": folio_solicitud}}]},
+        "Fecha de Solicitud": {"date": {"start": fecha_solicitud_iso}},
+        "Nombre del solicitante": {"rich_text": [{"text": {"content": nombre_solicitante}}]},
+        # NOTA: Aquí vinculamos la Partida. Usamos la constante para el nombre de la propiedad Relation.
+        # El valor es un array de objetos con el id de la página relacionada.
+        NOTION_PROP_MATERIALES_PROYECTO_RELATION: {"relation": [{"id": partida_page_id}]},
+        "Cantidad solicitada": {"number": cantidad_solicitada_num},
+        "Nombre del material": {"rich_text": [{"text": {"content": nombre_material}}]},
+        "Unidad de medida": {"select": {"name": unidad_medida}},
+        "Tipo de material": {"rich_text": [{"text": {"content": tipo_material}}]}, # Asumimos que es texto
+
+        # Dimensiones - enviar como texto. Convertir 'N/A' o vacío a null si es necesario,
+        # o enviar como string 'N/A' o '' y manejarlo en Notion o reportes.
+        # Vamos a enviar "" si está vacío, y "N/A" si se marcó como N/A en el frontend.
+        # La función collectFormData ya maneja si enviar "" o "N/A" o el valor.
+        # Solo debemos asegurarnos de que el tipo de propiedad en Notion sea Rich Text.
+        "Largo": {"rich_text": [{"text": {"content": str(largo) if largo is not None else ""}}]},
+        "Ancho": {"rich_text": [{"text": {"content": str(ancho) if ancho is not None else ""}}]},
+        "Alto": {"rich_text": [{"text": {"content": str(alto) if alto is not None else ""}}]},
+        "Diámetro": {"rich_text": [{"text": {"content": str(diametro) if diametro is not None else ""}}]},
+
+        # Especificaciones adicionales (opcional)
+        "Especificaciones adicionales": {"rich_text": [{"text": {"content": especificaciones_adicionales.strip()}}]} if especificaciones_adicionales else None,
+
+        # Checkboxes
+        "Urgente": {"checkbox": urgente},
+        "Recuperado": {"checkbox": recuperado},
+
+        # Campos fijos para Logística
+        "Proveedor": {"rich_text": [{"text": {"content": proveedor_logistica}}]}, # Asumimos texto
+        "Departamento/Área": {"rich_text": [{"text": {"content": departamento_logistica}}], "type": "rich_text"}, # Asegurar tipo si es necesario
+
+        # Propiedad de Relación con Usuarios (si aplica y la BD la tiene)
+        # Asumimos que hay una propiedad de tipo Relation llamada 'Usuario de la App' que se vincula a la BD de Usuarios.
+        # Puedes ajustar el nombre de la propiedad ('Usuario de la App') si es diferente en tu DB de Materiales.
+        # La lógica para encontrar la página del usuario en la BD de Usuarios NO está aquí.
+        # Si user_id es el ID de la página de Notion del usuario en tu BD de Usuarios:
+        "Usuario de la App": {"relation": [{"id": user_id}]},
+    }
+
+    # Limpiar propiedades None (como especificaciones_adicionales si está vacío)
+    properties_db1 = {k: v for k, v in common_properties.items() if v is not None}
+    properties_db2 = {k: v for k, v in common_properties.items() if v is not None}
+
+    # Propiedades específicas de DB1 si las hubiera... (ej. "Estado Solicitud DB1": {"status": {"name": "Pendiente"}})
+    # properties_db1["Estado Solicitud"] = {"status": {"name": "Pendiente"}} # Ejemplo
+
+    # Propiedades específicas de DB2 si las hubiera...
+    # properties_db2["Otro Campo DB2"] = {"checkbox": False} # Ejemplo
+
+
+    # --- 4. Crear páginas en ambas bases de datos ---
+    url_db1 = None
+    url_db2 = None
+
+    # Crear página en DB1
+    try:
+        logger.info(f"Creando página en DB1 ({database_id_db1}) para Folio: {folio_solicitud}")
+        # El título de la página podría ser el Folio o la combinación de Material y Folio
+        # Asumimos que el título es una propiedad de tipo 'title', cuyo nombre es 'Folio/Material' o similar.
+        # Debes ajustar el nombre de la propiedad 'title' ('Name' por defecto en Notion a veces) si es diferente.
+        properties_db1["Name"] = {"title": [{"text": {"content": f"{folio_solicitud} - {nombre_material}"}}]} # Asumir 'Name' es el campo title
+
+        response_db1 = notion_client.pages.create(parent={"database_id": database_id_db1}, properties=properties_db1)
+        url_db1 = response_db1.get("url")
+        logger.info(f"Página creada exitosamente en DB1. Folio: {folio_solicitud}. URL: {url_db1}")
+
+    except APIResponseError as e:
+        logger.error(f"Error API al crear página en DB1 ({database_id_db1}): Código={e.code if hasattr(e, 'code') else 'N/A'} Mensaje={e.message if hasattr(e, 'message') else str(e)} Estado HTTP={e.status if hasattr(e, 'status') else 'N/A'}", exc_info=True)
+        notion_response_body = getattr(e, 'response', None)
+        notion_error_details = None
+        if notion_response_body is not None and hasattr(notion_response_body, 'json'):
+             try: notion_error_details = notion_response_body.json()
+             except Exception: pass
+
+        # Si falla la creación en DB1, reportar el error. No intentamos crear en DB2 si la primera falla crucialmente.
+        return e.status if hasattr(e, 'status') and e.status is not None else 500, { # Fallback a 500
+            "error": f"Error al crear registro en base de datos interna de Notion: {e.message if hasattr(e, 'message') else str(e)}",
+            "notion_error_details": notion_error_details
+        }
+    except Exception as e:
+        logger.error(f"Error inesperado al crear página en DB1 ({database_id_db1}): {str(e)}", exc_info=True)
+        return 500, {"error": f"Error interno del servidor al crear registro: {str(e)}"}
+
+
+    # Crear página en DB2
+    # NOTA: Puedes decidir si la falla en DB2 debe anular el éxito en DB1.
+    # Actualmente, si DB1 tiene éxito y DB2 falla, DB1 se queda. Reportamos el error de DB2.
+    try:
+        logger.info(f"Creando página en DB2 ({database_id_db2}) para Folio: {folio_solicitud}")
+        # Asumimos que DB2 tiene la misma estructura de propiedades o compatible.
+        # Asegurarse de que el campo 'title' también se llame 'Name' o ajustar.
+        properties_db2["Name"] = {"title": [{"text": {"content": f"{folio_solicitud} - {nombre_material}"}}]} # Asumir 'Name' es el campo title
+
+        response_db2 = notion_client.pages.create(parent={"database_id": database_id_db2}, properties=properties_db2)
+        url_db2 = response_db2.get("url")
+        logger.info(f"Página creada exitosamente en DB2. Folio: {folio_solicitud}. URL: {url_db2}")
+
+    except APIResponseError as e:
+        logger.error(f"Error API al crear página en DB2 ({database_id_db2}): Código={e.code if hasattr(e, 'code') else 'N/A'} Mensaje={e.message if hasattr(e, 'message') else str(e)} Estado HTTP={e.status if hasattr(e, 'status') else 'N/A'}", exc_info=True)
+        notion_response_body = getattr(e, 'response', None)
+        notion_error_details = None
+        if notion_response_body is not None and hasattr(notion_response_body, 'json'):
+             try: notion_error_details = notion_response_body.json()
+             except Exception: pass
+
+        # Si falla la creación en DB2, retornamos un warning y la URL de la página creada en DB1.
+        return 201, { # Status 201 (Created) porque al menos una página se creó.
+            "warning": f"Solicitud registrada en base de datos interna (DB1), pero hubo un error al registrar en la base de datos externa (DB2): {e.message if hasattr(e, 'message') else str(e)}",
+            "notion_url": url_db1, # Retornar la URL de la página creada en DB1
+            "notion_error_details": notion_error_details # Opcional: incluir detalles del error de DB2
+        }
+    except Exception as e:
+        logger.error(f"Error inesperado al crear página en DB2 ({database_id_db2}): {str(e)}", exc_info=True)
+        # Si falla la creación en DB2, retornamos un warning y la URL de la página creada en DB1.
+        return 201, { # Status 201 (Created) porque al menos una página se creó.
+            "warning": f"Solicitud registrada en base de datos interna (DB1), pero hubo un error inesperado al registrar en la base de datos externa (DB2): {str(e)}",
+            "notion_url": url_db1, # Retornar la URL de la página creada en DB1
+            # No hay notion_error_details para errores no APIResponseError
+        }
+
+
+    # --- 5. Éxito en la creación de ambas páginas ---
+    # Si llegamos aquí, ambas páginas se crearon correctamente.
+    return 201, {"message": "Solicitud de material registrada exitosamente en ambas bases de datos.", "notion_url": url_db1, "notion_url_db2": url_db2}

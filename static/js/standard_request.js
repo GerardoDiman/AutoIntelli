@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const nombreSolicitanteInput = document.getElementById('nombre_solicitante');
     // const departamentoAreaSelect = document.getElementById('departamento_area'); // Este select visible fue eliminado
-    const proyectoInput = document.getElementById('proyecto'); // Usar 'proyecto' en minúsculas aquí
+    const partidaInput = document.getElementById('partida'); // Usar 'partida' en minúsculas aquí
     const especificacionesAdicionalesTextarea = document.getElementById('especificaciones_adicionales');
 
     // Referencias a elementos de Folio
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
            // Limpiar errores visuales y mensajes anteriores
             form.querySelectorAll('.error-field').forEach(el => el.classList.remove('error-field')); // Usa referencia DOM
             if (responseMessageDiv) { // Usa referencia DOM
-                 responseMessageDiv.textContent = '';
+ responseMessageDiv.innerHTML = ''; // Use innerHTML to clear potential HTML content
                  // --- ** CORRECCIÓN AQUÍ: Usar responseMessageDiv ** ---
                  responseMessageDiv.classList.remove('processing', 'success', 'error', 'warning'); // Limpiar también warnings
                  // --- FIN CORRECCIÓN ---
@@ -443,7 +443,10 @@ document.addEventListener('DOMContentLoaded', function() {
            // Validar campos comunes requeridos (que ahora NO tienen el atributo 'required' en HTML)
            // 'proveedor', 'departamento_area', 'fecha_solicitud' are hidden/readonly and set by JS, assumed present.
            // Adding 'tipo_material' here as it's also effectively required once a material is selected
-           const camposComunesReq = ['nombre_solicitante', 'proyecto', 'cantidad_solicitada', 'nombre_material', 'unidad_medida', 'tipo_material'];
+           const camposComunesReq = ['nombre_solicitante', 'partida', 'cantidad_solicitada', 'nombre_material', 'unidad_medida', 'tipo_material'];
+           // Expresión regular para formato XX-XXXX-XX.XX (X es dígito)
+           const partidaFormatRegex = /^\d{2}-\d{4}-\d{2}\.\d{2}$/;
+
            camposComunesReq.forEach(name => { // Itera sobre nombres (keys)
                const value = datosSolicitud[name]; // Obtener valor del objeto recolectado
 
@@ -454,7 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
                    const campo = form.querySelector(`[name="${name}"]`);
                    if(campo) campo.classList.add('error-field');
 
-                   let fieldName = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
+                   let fieldName = name.replace(/_/g, ' ');
+                   // Capitalize first letter unless it's 'partida' which should be 'Partida'
+                   if (name !== 'partida') {
+                       fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+                   }
                    // Improve field names for messages
                    if (name === 'unidad_medida' || name === 'nombre_material') {
                         const label = form.querySelector(`label[for="${campo?.id}"]`);
@@ -465,9 +472,21 @@ document.addEventListener('DOMContentLoaded', function() {
                          fieldName = 'Tipo de material'; // Explicitly name the type field
                    }
                     errores.push(`"${fieldName}" es obligatorio.`);
-               } else if (name === 'cantidad_solicitada' && typeof value === 'number' && value <= 0) {
+
+                   // If the field is required and empty, no need to check format
+                   return;
+               }
+
+               // --- Validar formato del campo 'partida' si NO está vacío y NO es requerido (already handled above) ---
+               // This check now only runs if the field has a value (because empty is handled above)
+               if (name === 'partida' && !partidaFormatRegex.test(value)) {
+                    isValid = false;
+                     const campo = form.querySelector(`[name="${name}"]`);
+                    if(campo) campo.classList.add('error-field');
+                   errores.push('El formato del campo "Partida" debe ser XX-XXXX-XX.XX (donde X son números).');
+               } else if (name === 'cantidad_solicitada' && typeof value === 'number' && value !== null && value <= 0 && value !== "") { // Check for empty string too, although type="number" should prevent this for non-empty
                      // Specific check for quantity value if it was somehow 0 or less after parsing (although HTML min="1" helps)
-                     isValid = false;
+                     isValid = false; // The field is not valid
                      const campo = form.querySelector(`[name="${name}"]`);
                      if(campo) campo.classList.add('error-field');
                       errores.push(`"Cantidad solicitada" debe ser un número mayor que 0.`);
