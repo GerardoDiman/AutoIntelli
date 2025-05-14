@@ -44,7 +44,8 @@
                         <tr>
                             <th>Folio</th>
                             <th>Proveedor</th>
-                            <th>Material / Descripción</th> {# Encabezado genérico, mostrará Nombre del Material o Descripción Torni #}
+                            <th>Nombre del solicitante</th> {# Nueva columna para Nombre del solicitante #}
+                            <th>Partida</th> {# Nueva columna para Partida #}
                             <th>Cantidad</th>
                             <th>Fecha Solicitud</th>
                             <th>Proyecto</th> {# Mostrará 'Vinculado' si tiene relación #}
@@ -83,19 +84,24 @@
                                 {% endif %}
                             </td>
 
-                            {# Material / Descripción (Intentar mostrar Nombre del material (Select) o Descripción (Rich Text)) #}
+                            {# Nombre del solicitante (Asumiendo Select) #}
                             <td>
-                                {% set nombre_mat_prop = solicitud.properties.get('Nombre del material') %} {# <-- Usa el nombre EXACTO #}
-                                {% set desc_torni_prop = solicitud.properties.get('Descripción') %} {# <-- Usa el nombre EXACTO #}
-                                {% if nombre_mat_prop and nombre_mat_prop.type == 'select' and nombre_mat_prop.select %}
-                                     {{ nombre_mat_prop.select.name }}
-                                {% elif desc_torni_prop and desc_torni_prop.type == 'rich_text' %}
-                                     {# Mostrar contenido de Rich Text (puede haber varios segmentos) #}
-                                     {% for text_part in desc_torni_prop.get('rich_text', []) %}
-                                         {{ text_part.text.content }}
-                                     {% endfor %}
+                                {% set solicitante_prop = solicitud.properties.get('Nombre del solicitante') %} {# <-- Usa el nombre EXACTO de la propiedad Nombre del solicitante #}
+                                {% if solicitante_prop and solicitante_prop.type == 'select' and solicitante_prop.select %}
+                                    {{ solicitante_prop.select.name }}
                                 {% else %}
-                                     N/A {# Fallback si ninguna de las propiedades es encontrada o tiene valor #}
+                                    N/A
+                                {% endif %}
+                            </td>
+
+                             {# Partida (Asumiendo Relation) #}
+                            <td>
+                                {% set partida_prop = solicitud.properties.get('Partida') %} {# <-- Usa el nombre EXACTO de la propiedad Partida #}
+                                {% if partida_prop and partida_prop.type == 'relation' and partida_prop.relation %}
+                                     Vinculado ({{ partida_prop.relation | length }}) {# Muestra "Vinculado (1)" si hay una relación #}
+                                     {# Para mostrar el nombre de la partida, necesitas modificar la lógica en compras.py #}
+                                {% else %}
+                                     Sin vincular {# O N/A #}
                                 {% endif %}
                             </td>
 
@@ -211,113 +217,4 @@
 {% block scripts_extra %}
     {# Script JavaScript específico para este dashboard #}
     <script src="{{ url_for('static', filename='js/dashboard_compras.js') }}"></script>
-
-    {# Script para manejar la actualización de estatus via AJAX. Este script debe escuchar cambios en el select. #}
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const updateStatusSelects = document.querySelectorAll('.update-estatus-select');
-        const feedbackDiv = document.getElementById('compras-update-feedback'); // Usa el div de feedback
-
-        updateStatusSelects.forEach(select => {
-            select.addEventListener('change', function() {
-                const newStatus = this.value; // El valor seleccionado
-                const row = this.closest('tr'); // Encuentra la fila (<tr>) padre
-                const pageId = row.dataset.pageId; // Obtiene el ID de página del atributo data-page-id
-
-                if (!pageId || !newStatus) {
-                    console.error("No se pudo obtener Page ID o nuevo estatus.");
-                    displayFeedback("Error: Datos de actualización incompletos.", 'error');
-                    return;
-                }
-
-                // Preparar los datos a enviar al backend. La ruta /update_solicitud_status espera {'properties': {...}}
-                const dataToSend = {
-                    properties: {
-                        "Estatus": { // <-- Nombre exacto de la propiedad de Estatus en Notion
-                            "select": { "name": newStatus }
-                        }
-                        // Puedes añadir otras propiedades si quisieras actualizar más campos
-                    }
-                };
-
-                console.log(`Actualizando solicitud ${pageId} a estatus: ${newStatus}`);
-                displayFeedback(`Actualizando solicitud ${pageId}...`, 'processing');
-                row.classList.add('updating'); // Añade clase para indicar estado visualmente
-
-                fetch(`/compras/update_solicitud_status/${pageId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // Si usas CSRF protection, añade el token aquí
-                        // 'X-CSRFToken': '{# {{ csrf_token() }} #}'
-                    },
-                    body: JSON.stringify(dataToSend)
-                })
-                .then(response => {
-                    row.classList.remove('updating'); // Remueve clase de estado
-                    if (!response.ok) {
-                         // Intenta leer la respuesta de error del backend (puede ser JSON)
-                         return response.json().then(err => Promise.reject(err));
-                    }
-                    return response.json(); // Procesar la respuesta exitosa (espera JSON)
-                })
-                .then(data => {
-                    // Actualización exitosa en el backend (y Notion)
-                    console.log("Actualización exitosa:", data);
-                    displayFeedback("Solicitud actualizada con éxito.", 'success');
-
-                    // Opcional: Actualizar visualmente la celda del estatus actual sin recargar
-                    const currentStatusCell = row.querySelector('.solicitud-estatus-celda .current-estatus-text');
-                    if (currentStatusCell) {
-                        currentStatusCell.textContent = newStatus; // Actualiza el texto visible
-                    }
-
-                    // Resetea el select a "Cambiar Estatus" o deja el nuevo valor seleccionado
-                    // this.value = ""; // Deselecciona el nuevo valor si quieres forzar otra selección
-                     this.selectedIndex = 0; // Opcional: vuelve a seleccionar la opción "Cambiar Estatus"
-                     // this.disabled = true; // Opcional: deshabilitar select temporalmente
-
-                })
-                .catch(error => {
-                    // Error en el backend o en la API de Notion
-                    console.error("Error al actualizar:", error);
-                    const errorMessage = error.error || error.message || "Error desconocido al actualizar."; // Intenta obtener un mensaje de error descriptivo
-                    displayFeedback(`Fallo al actualizar: ${errorMessage}`, 'error');
-                });
-            });
-        });
-
-        // Función auxiliar para mostrar feedback
-        function displayFeedback(message, type) {
-             feedbackDiv.textContent = message;
-             feedbackDiv.className = ''; // Limpia clases previas
-             feedbackDiv.classList.add('message', type); // Añade clases para CSS (processing, success, error)
-             feedbackDiv.style.display = 'block'; // Asegura que sea visible
-
-             // Opcional: Ocultar el mensaje de feedback después de un tiempo para éxito/error
-             if (type !== 'processing') {
-                  setTimeout(() => {
-                      feedbackDiv.style.display = 'none';
-                  }, 8000); // Oculta después de 8 segundos
-             }
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const flashMessages = document.querySelectorAll('.flash-message');
-        const autoCloseDelay = 5000; // 5 segundos
-        const fadeOutDuration = 500; // 0.5 segundos
-        flashMessages.forEach(message => {
-            setTimeout(() => {
-                message.classList.add('fade-out');
-                setTimeout(() => {
-                    if (message.parentNode) {
-                       message.parentNode.removeChild(message); // Elimina del DOM
-                    }
-                }, fadeOutDuration);
-            }, autoCloseDelay);
-        });
-    });
-    </script>
-
 {% endblock %}

@@ -10,537 +10,129 @@
 /* o styles.css no se carga ANTES de dashboard_compras.css, descomenta y ajusta este bloque :root */
 /* para definir las variables necesarias para este archivo. */
 
- :root {
-    --primario: #D42D2E;             /* Rojo principal */
-    --gris-t: #313131d5;           /* Gris con transparencia */
-    --gris-claro: #858585;         /* Gris claro para texto secundario */
-    --blanco: #FFFFFF;             /* Blanco */
+:root {
+   --primario: #D42D2E;             /* Rojo principal */
+   --gris-t: #313131d5;           /* Gris con transparencia */
+   --gris-claro: #858585;         /* Gris claro para texto secundario */
+   --blanco: #FFFFFF;             /* Blanco */
 
-    --border-color-light: #ccc;    /* Color de borde claro */
-    --border-color-dark: #555;     /* Color de borde oscuro para dark mode */
-
-    --background-light: #f8f9fa;   /* Fondo claro */
-    --background-dark: #343a40;    /* Fondo oscuro para dark mode */
-
-    /* Colores para badges de estatus (EJEMPLOS - AJUSTA A TUS PREFERENCIAS Y NOMBRES DE ESTATUS) */
-    --status-pendiente: #f0ad4e;     /* Naranja/Amarillo */
-    --status-en-proceso: #5bc0de;  /* Azul */
-    --status-completada: #5cb85c;   /* Verde */
-    --status-cancelada: #d9534f;   /* Rojo */
-    --status-na: #858585;          /* Gris para N/A si lo quieres coloreado */
-
-
-    /* Colores para mensajes de feedback (EJEMPLOS) */
-    --processing-text: #f0ad4e;    /* Naranja */
-    --success-bg: #2a573a;         /* Fondo verde oscuro translúcido */
-    --success-text: #a7d7b4;      /* Texto verde claro */
-    --error-bg: #4d2429;           /* Fondo rojo oscuro translúcido */
-    --error-text: #f1b0b7;        /* Texto rojo claro */
-    --warning-bg: #ffc107;         /* Color de warning estándar (amarillo) */
-    --warning-text: #856404;       /* Texto oscuro para warning */
-    --info-bg: #17a2b8;            /* Color de info estándar (azul cian) */
-    --info-text: #0d4f5d;         /* Texto oscuro para info */
-
-
-    /* Colores de texto y fondo para input/select en modos */
-    --input-bg-light: #ffffff;
-    --input-text-light: #000000;
-    --input-border-light: #ccc;
-
-    --input-bg-dark: #3a3a3a;
-    --input-text-dark: #e0e0e0;
-    --input-border-dark: #555;
-
-
-    --text-color-light: #333; /* Color de texto general en modo claro */
-    --text-color-dark: #e0e0e0; /* Color de texto general en modo oscuro */
-
-
-    --shadow-light: rgba(0, 0, 0, 0.1); /* Sombra ligera */
-    --shadow-dark: rgba(255, 255, 255, 0.08); /* Sombra oscura */
-
-
-    --transition-speed: 0.3s;       /* Velocidad de las transiciones */
-    --header-height: 80px;          /* Altura del encabezado si existe */
-
-     /* Si tus variables ya están en styles.css, este bloque no es necesario aquí */
+   --border-color-light: #ccc;    /* Color de borde claro */
+   --border-color-dark: #555;     /* Color de borde oscuro para dark mode */
 }
 
-/* Ajusta variables en dark mode si usas el bloque :root arriba y necesitas redefinir */
-/* body.dark-mode {
-     --border-color-light: var(--border-color-dark);
-     --background-light: var(--background-dark);
-     --text-color-light: var(--text-color-dark);
-     --input-bg-light: var(--input-bg-dark);
-     --input-text-light: var(--input-text-dark);
-     --input-border-light: var(--input-border-dark);
-} */
+/* AQUI CONTINUAN TUS ESTILOS ESPECIFICOS PARA EL DASHBOARD DE COMPRAS */
+/* ... (Mantén el resto de tus estilos actuales aquí) ... */
+/* Por ejemplo, estilos para la tabla, títulos, etc. */
 
 
+/* --- Nuevos estilos para el feedback de actualización --- */
 
-/* --- Estilos para el WRAPPER principal (Posicionamiento y Espaciado) --- */
-#compras-dashboard-wrapper {
-    display: flex;
-    justify-content: center; /* Centra el contenido horizontalmente */
-    align-items: flex-start; /* Alinea el contenido al inicio vertical */
-    min-height: calc(100vh - var(--header-height, 80px)); /* Asegura que ocupe al menos la altura restante */
-    padding: 20px; /* Padding alrededor del contenido */
-    box-sizing: border-box; /* Incluir padding y borde en el ancho */
-    width: 100%; /* Ocupa todo el ancho disponible */
-     /* Usa el color de fondo del body definido globalmente en styles.css o base.html */
-}
-
-
-/* --- Estilos para el CONTENEDOR INTERNO (El "Recuadro" principal de fondo oscuro) --- */
-/* Aplica a .container dentro del wrapper los estilos del recuadro */
-#compras-dashboard-wrapper .container {
-    max-width: 1600px; /* AJUSTA ESTE VALOR - AUMENTAR EL ANCHO MÁXIMO DEL CONTENEDOR */
-    /* Considera usar un porcentaje para que se ajuste a pantallas más grandes que 1600px */
-    /* max-width: 90%; */ /* Ejemplo: ocupar hasta el 90% del ancho de la ventana */
-
-    width: 100%; /* Ocupa el 100% del wrapper hasta el max-width */
-    margin: 0 auto; /* Centra el contenedor */
-
-    /* Estilos del recuadro */
-    padding: 30px 40px; /* Padding interno */
-    background-color: var(--gris-t, #313131d5); /* Fondo con transparencia o sólido */
-    border-radius: 12px; /* Bordes redondeados */
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); /* Sombra más marcada */
-    color: var(--gris-claro, #858585); /* Color de texto por defecto para el contenedor */
-    text-align: left; /* Alineación de texto por defecto */
-    position: relative; /* Para posicionar elementos absolutos dentro (como mensajes flash) */
-    box-sizing: border-box; /* Incluir padding y borde en el ancho */
-    transition: background-color var(--transition-speed, 0.3s) ease, box-shadow var(--transition-speed, 0.3s) ease, color var(--transition-speed, 0.3s) ease;
-}
-
-/* --- Estilos del Dark Mode para el CONTENEDOR INTERNO --- */
-/* Estos estilos se aplican cuando body tiene la clase .dark-mode */
-body.dark-mode #compras-dashboard-wrapper .container {
-    background-color: var(--container-bg-dark, #1e1e1e); /* Un color oscuro sólido */
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
-    color: var(--text-color-dark, #e0e0e0); /* Color de texto general en dark mode */
-}
-
-
-/* --- Título de la Página (Panel de Compras) --- */
-#compras-dashboard-wrapper .container .titulo-pagina {
-    color: var(--primario, #D42D2E);
-    text-align: center;
-    font-family: var(--Orbitron, sans-serif); /* O tu fuente de encabezados */
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 30px;
-    border-bottom: 2px solid var(--primario, #D42D2E); /* Borde más grueso */
-    padding-bottom: 0.8rem; /* Más espacio debajo del título */
-    font-size: 2.8rem; /* Título más grande */
-}
-
-/* Títulos de sección (Solicitudes (Vista Compras)) */
-#compras-dashboard-wrapper .container h2 {
-     color: var(--blanco, #FFFFFF);
-     margin-top: 30px; /* Más espacio arriba del subtítulo */
-     margin-bottom: 20px;
-     font-size: 2rem; /* Subtítulo más grande */
-     font-weight: bold;
-     border-left: 4px solid var(--primario, #D42D2E); /* Borde lateral sutil */
-     padding-left: 10px;
-     line-height: 1.2; /* Ajusta la altura de línea */
-}
-
-/* Estilos para la tabla de solicitudes */
-/* Usamos un ID específico para esta tabla para evitar conflictos */
-#compras-dashboard-wrapper .container #solicitudes-table-compras {
-    width: 100%; /* La tabla siempre intentará ocupar el 100% del contenedor padre */
-    border-collapse: separate; /* Usar separate para bordes redondeados y espaciado si lo necesitas */
-    border-spacing: 0; /* Eliminar espacio entre celdas si usas separate */
-    margin-bottom: 20px; /* Espacio debajo de la tabla */
-    overflow-x: auto; /* MANTENER: Permite scroll horizontal si el contenido excede el ancho del contenedor */
-    border-radius: 8px; /* Esquinas redondeadas para la tabla */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* Sombra sutil para la tabla */
-    /* Eliminar display: block; de thead, tbody, tr, th, td. Jinja ya no hace falta forzarlo. */
-    /* white-space: normal; */ /* Se define a nivel de td */
-}
-
-/* Asegúrate de que no hay display: block; en thead, tbody, tr, th, td */
-#compras-dashboard-wrapper .container #solicitudes-table-compras thead,
-#compras-dashboard-wrapper .container #solicitudes-table-compras tbody,
-#compras-dashboard-wrapper .container #solicitudes-table-compras tr {
-     /* display: block; */ /* COMENTAR O ELIMINAR si estaba aquí */
-}
-
-#compras-dashboard-wrapper .container #solicitudes-table-compras th,
-#compras-dashboard-wrapper .container #solicitudes-table-compras td {
-     /* display: block; */ /* COMENTAR O ELIMINAR si estaba aquí */
-     /* white-space: normal; */ /* Se define más abajo */
-}
-
-
-/* Estilos para encabezados (thead) */
-#solicitudes-table-compras thead th {
-    background-color: #343a40; /* Fondo oscuro para el encabezado */
-    color: var(--primario, #D42D2E); /* Color del texto del encabezado */
-    font-weight: 700; /* Más negrita */
-    font-size: 1em;
-    text-transform: uppercase;
-    text-align: left; /* Alineación de texto por defecto para encabezados */
-    padding: 12px 15px; /* Más padding */
-    border-bottom: 2px solid var(--primario, #D42D2E); /* Borde inferior */
-    /* No uses width aquí si quieres que los anchos de columna se auto-ajusten o uses min-width */
-}
-/* Esquinas redondeadas específicas para los thead th */
-#solicitudes-table-compras thead tr:first-child th:first-child { border-top-left-radius: 8px; }
-#solicitudes-table-compras thead tr:first-child th:last-child { border-top-right-radius: 8px; }
-
-
-/* Estilos para celdas del cuerpo (tbody td) */
-#solicitudes-table-compras tbody td {
-    padding: 10px 15px; /* Padding consistente */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Borde inferior sutil y transparente */
-    color: var(--text-color-dark, #e0e0e0); /* Color de texto por defecto para las celdas */
-    background-color: rgba(255, 255, 255, 0.05); /* Fondo muy sutilmente transparente */
-    vertical-align: middle; /* Alinea el contenido verticalmente al centro */
-    word-break: break-word; /* Permite que palabras largas se corten para evitar desbordamiento */
-    white-space: normal; /* IMPORTANTE: PERMITE QUE EL TEXTO LARGO SE AJUSTE EN VARIAS LÍNEAS */
-     /* No uses width aquí a menos que quieras anchos fijos sin importar el contenido */
-}
-/* Fondo para filas pares (zebra stripes) */
-#solicitudes-table-compras tbody tr:nth-child(even) td {
-    background-color: rgba(255, 255, 255, 0.08); /* Fondo ligeramente más oscuro para filas pares */
-}
-
-/* Estilo al pasar el ratón sobre las filas */
-#solicitudes-table-compras tbody tr:hover td {
-    background-color: rgba(255, 255, 255, 0.15); /* Fondo más visible al pasar el ratón */
-    cursor: default; /* Cambiar a default si la fila entera no es clickeable */
-    transition: background-color var(--transition-speed, 0.3s) ease;
-}
-
-
-/* --- ANCHOS DE COLUMNAS Y ALINEACIÓN ESPECÍFICA (AJUSTA SEGÚN TUS DATOS) --- */
-/* Utiliza selectores nth-child para apuntar a columnas específicas por su posición. */
-/* El orden es crucial y debe coincidir con tu plantilla HTML. */
-/* Puedes usar min-width para asegurar un tamaño mínimo o width para intentar fijar un ancho. */
-/* La combinación de min-width y white-space: normal es útil para contenido variable. */
-
-/* Alineación Horizontal por columna (Override default left de th, td) */
-#solicitudes-table-compras th,
-#solicitudes-table-compras td {
-    text-align: left; /* Reset a left por defecto */
-}
-#solicitudes-table-compras th:nth-child(4), /* Cantidad */
-#solicitudes-table-compras td:nth-child(4),
-#solicitudes-table-compras th:nth-child(6), /* Proyecto (si muestras "Vinculado", centrar es buena idea) */
-#solicitudes-table-compras td:nth-child(6),
-#solicitudes-table-compras th:nth-child(8), /* Estatus Actual */
-#solicitudes-table-compras td:nth-child(8),
-#solicitudes-table-compras th:nth-child(10), /* Actualizar Estatus (Select) */
-#solicitudes-table-compras td:nth-child(10),
-#solicitudes-table-compras th:nth-child(11), /* Acciones (Ver) */
-#solicitudes-table-compras td:nth-child(11) {
-    text-align: center; /* Centra el contenido en estas columnas */
-}
-
-/* Anchos Mínimos (para que no se colapsen demasiado si el texto se envuelve) */
-/* O Anchos Fijos (si el contenido es siempre corto) */
-/* AJUSTA ESTOS VALORES MIN-WIDTH y WIDTH BASADO EN LA IMAGEN Y TUS DATOS REALES */
-#solicitudes-table-compras th:nth-child(1), #solicitudes-table-compras td:nth-child(1) { min-width: 120px; } /* Folio - AJUSTA */
-#solicitudes-table-compras th:nth-child(2), #solicitudes-table-compras td:nth-child(2) { min-width: 100px; } /* Proveedor - AJUSTA */
-#solicitudes-table-compras th:nth-child(3), #solicitudes-table-compras td:nth-child(3) { min-width: 200px; } /* Material / Descripción - AJUSTA */
-#solicitudes-table-compras th:nth-child(4), #solicitudes-table-compras td:nth-child(4) { width: 80px; } /* Cantidad - Fijo */
-#solicitudes-table-compras th:nth-child(5), #solicitudes-table-compras td:nth-child(5) { min-width: 120px; } /* Fecha Solicitud - AJUSTA */
-#solicitudes-table-compras th:nth-child(6), #solicitudes-table-compras td:nth-child(6) { min-width: 100px; } /* Proyecto - AJUSTA */
-#solicitudes-table-compras th:nth-child(7), #solicitudes-table-compras td:nth-child(7) { min-width: 100px; } /* Departamento - AJUSTA */
-#solicitudes-table-compras th:nth-child(8), #solicitudes-table-compras td:nth-child(8) { width: 100px; } /* Estatus Actual - Fijo */
-#solicitudes-table-compras th:nth-child(9), #solicitudes-table-compras td:nth-child(9) { min-width: 250px; white-space: normal; } /* Especificaciones - AJUSTA */
-#solicitudes-table-compras th:nth-child(10), #solicitudes-table-compras td:nth-child(10) { width: 120px; } /* Actualizar Estatus - Fijo */
-#solicitudes-table-compras th:nth-child(11), #solicitudes-table-compras td:nth-child(11) { width: 80px; } /* Acciones (Ver) - Fijo */
-
-
-/* Estilo para la badge de estatus (La pastilla coloreada) */
-.status-badge { /* Clase general para la badge, añadida en el HTML */
-    display: inline-block; /* Permite padding y dimensiones */
-    padding: 4px 12px; /* Padding horizontal más grande */
-    border-radius: 16px; /* Bordes muy redondeados (pastilla) */
-    font-size: 0.8em; /* Fuente un poco más pequeña */
-    font-weight: bold;
-    color: #fff; /* Texto blanco para las badges */
-    min-width: 60px; /* Asegura un ancho mínimo para la badge */
-    text-align: center; /* Centrar el texto DENTRO de la badge */
-    /* Los colores de fondo se aplican con clases específicas (status-pendiente, etc.) */
-}
-
-/* Clases de color para las badges de estatus (DEBEN coincidir con los nombres de estatus formateados del template) */
-/* Asegúrate de que 'status-en-proceso' usa guiones si reemplazas espacios en el template */
-.status-pendiente { background-color: var(--status-pending, #f0ad4e); }      /* Naranja */
-.status-en-proceso { background-color: var(--status-inprogress, #5bc0de); }   /* Azul */
-.status-completada { background-color: var(--status-completed, #5cb85c); }    /* Verde */
-.status-cancelada { background-color: var(--status-cancelled, #d9534f); }    /* Rojo */
-/* Añade clases para cualquier otro estatus que tengas en Notion, usando el formato status-nombre-en-minusculas-sin-espacios/especiales */
-/* Si usas N/A como opción de estatus en Notion (raro para Select), añade: */
-/* .status-n-a { background-color: var(--status-na, #858585); color: #333; } */
-
-
-/* Estilo para el caso N/A en el estatus (cuando NO es una badge, ej. si no hay valor select) */
-/* Esto apunta al span que no tiene la clase .status-badge (la que se usa cuando no hay select/valor) */
-.solicitud-estatus-celda .current-estatus-text:not(.status-badge) {
-    font-weight: normal;
-    color: var(--gris-claro, #858585); /* Color de texto secundario */
-    /* Puedes añadir padding/margin si quieres que se alinee visualmente con las badges */
-    /* padding: 4px 8px; */
-}
-
-
-/* Estilo para el select de actualización de estatus */
-.update-estatus-select {
-    width: 100%; /* Ocupa todo el ancho de la celda */
-    padding: 8px 10px;
-    font-size: 0.95em;
-    border-radius: 4px; /* Bordes ligeramente redondeados */
-    border: 1px solid var(--border-color-light, #ccc);
-    background-color: rgba(255, 255, 255, 0.1); /* Fondo sutil */
-    color: var(--text-color-dark, #e0e0e0); /* Color de texto */
-    cursor: pointer;
-    /* Considera quitar la apariencia nativa y usar background-image para la flecha */
-    /* -webkit-appearance: none; */
-    /* -moz-appearance: none; */
-    /* appearance: none; */
-}
-body.dark-mode .update-estatus-select {
-     border-color: var(--input-border-dark, #555);
-     background-color: var(--input-bg-dark, #3a3a3a);
-     color: var(--input-text-dark, #e0e0e0);
-}
-.update-estatus-select:focus {
-    outline: none;
-    border-color: var(--primario, #D42D2E);
-    box-shadow: 0 0 5px rgba(212, 45, 46, 0.5);
-}
-/* Estilo para la opción default "Cambiar Estatus" */
-.update-estatus-select option[value=""][disabled] {
-    color: var(--gris-claro, #858585); /* Color más apagado para la opción default */
-}
-
-
-/* Estilo para el enlace "Ver en Notion" */
-.view-in-notion-link {
-     color: #66c0d2; /* Un azul claro/turquesa llamativo */
-     text-decoration: none;
-     font-size: 0.9em;
-     margin-left: 0; /* Eliminar margin-left si no hay botón Confirmar */
-     font-weight: bold;
-     /* display: inline-block; */ /* Útil si quieres darle padding/margin o min-width */
-     transition: color 0.2s ease;
-}
-.view-in-notion-link:hover {
-    text-decoration: underline;
-    color: var(--primario, #D42D2E);
-}
-
-
-/* --- Estilo para la fila cuando se está actualizando (clase añadida por JS) --- */
-/* Esto proporciona feedback visual al usuario mientras se espera la respuesta AJAX */
-#solicitudes-table-compras tr.updating td { /* Aplica el estilo a todas las celdas de la fila */
-    background-color: rgba(240, 173, 78, 0.2); /* Fondo amarillo claro translúcido */
-    opacity: 0.9;
-    transition: background-color 0.3s ease, opacity 0.3s ease;
-     /* Puedes añadir un borde sutil */
-     /* border-color: var(--status-pending, #f0ad4e); */
-}
-/* En dark mode */
-body.dark-mode #solicitudes-table-compras tr.updating td {
-    background-color: rgba(240, 173, 78, 0.3);
-}
-
-
-/* --- Estilo para el div de feedback de actualización AJAX --- */
-/* Asegúrate de que este ID coincida con el div en tu plantilla: <div id="compras-update-feedback"> */
+/* Estilos básicos para el div de feedback */
 #compras-update-feedback {
-    margin-top: 20px; /* Más espacio arriba */
-    margin-bottom: 20px; /* Espacio debajo */
-    padding: 15px; /* Más padding */
-    border-radius: 8px; /* Bordes más redondeados */
-    text-align: center;
-    font-size: 1.5rem;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid transparent; /* Borde por defecto transparente */
+    border-radius: 4px;
     font-weight: bold;
-    border: 1px solid transparent;
-    word-break: break-word; /* Permite que texto largo se ajuste */
-    opacity: 0; /* Inicialmente invisible */
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-    transform: translateY(10px); /* Ligeramente desplazado hacia abajo inicialmente */
-    /* display: none; */ /* El JS debería controlar si se muestra (display: block/none) */
+    min-height: 1.2em; /* Asegura un espacio mínimo aunque no haya texto */
+    /* Transición suave para ocultar */
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
 }
 
-/* Clases de estado para el feedback (coinciden con las clases añadidas por JS) */
+/* Estilo para mensajes de procesamiento/carga */
 #compras-update-feedback.processing {
-    background-color: rgba(240, 173, 78, 0.2); /* Fondo amarillo translúcido */
-    color: var(--processing-text, #f0ad4e); /* Texto naranja */
-    border-color: var(--processing-text, #f0ad4e); /* Borde naranja */
-    opacity: 1; /* Visible */
-    transform: translateY(0); /* Vuelve a la posición normal */
-     display: block; /* Asegura que se muestre si JS lo actualiza */
+    color: #0056b3; /* Azul */
+    border-color: #b8daff;
+    background-color: #e0f7fa; /* Azul claro */
 }
+
+/* Estilo para mensajes de éxito */
 #compras-update-feedback.success {
-    background-color: rgba(92, 184, 92, 0.2); /* Fondo verde translúcido */
-    color: var(--status-completed, #5cb85c); /* Texto verde (color de estatus completado) */
-    border-color: var(--status-completed, #5cb85c); /* Borde verde */
-    opacity: 1;
-    transform: translateY(0);
-     display: block;
+    color: #155724; /* Verde oscuro */
+    border-color: #c3e6cb;
+    background-color: #d4edda; /* Verde claro */
 }
+
+/* Estilo para mensajes de error */
 #compras-update-feedback.error {
-    background-color: rgba(217, 83, 79, 0.2); /* Fondo rojo translúcido */
-    color: var(--status-cancelled, #d9534f); /* Texto rojo (color de estatus cancelado) */
-    border-color: var(--status-cancelled, #d9534f); /* Borde rojo */
-    opacity: 1;
-    transform: translateY(0);
-    display: block;
+    color: #721c24; /* Rojo oscuro */
+    border-color: #f5c6cb;
+    background-color: #f8d7da; /* Rojo claro */
+}
+
+/* Estilo para mensajes informativos (si usas la clase 'info') */
+#compras-update-feedback.info {
+    color: #0c5460; /* Turquesa oscuro */
+    border-color: #bee5eb;
+    background-color: #d1ecf1; /* Turquesa claro */
+}
+
+/* Estilo para el div de feedback cuando está oculto */
+#compras-update-feedback:empty {
+    opacity: 0; /* Totalmente transparente cuando está vacío */
+    padding: 0; /* Elimina el padding cuando está vacío */
+    border: none; /* Elimina el borde cuando está vacío */
+    min-height: 0; /* Altura mínima de 0 cuando está vacío */
 }
 
 
-/* --- Estilos para Mensajes Flash de Flask --- */
-/* Asegúrate de que el contenedor .message-container esté posicionado correctamente */
-.message-container {
-    /* position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: calc(100% - 80px); max-width: calc(1600px - 80px); z-index: 1050; */
-    /* Si quieres que aparezcan flotando sobre todo, considera position: fixed */
-    /* position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; z-index: 1050; */
-    /* O déjalo en position: absolute y ajusta top/margin si se solapa con otros elementos */
-    position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-    width: calc(100% - 80px); max-width: calc(1600px - 80px); /* AJUSTA max-width al nuevo ancho del contenedor principal */
-    z-index: 1050;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-}
-/* Estilos individuales de los mensajes flash */
-.flash-message {
-    padding: 12px 18px; border: 1px solid transparent; border-radius: 6px; text-align: center;
-    width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.15); opacity: 1;
-    transition: opacity 0.5s ease-out, transform 0.3s ease-out; font-size: 1.4rem;
-    /* Colores por defecto si no se usan variables */
-    color: #333; background-color: #f2f2f2; border-color: #ccc;
-    margin-bottom: 10px; /* Espacio entre mensajes flash */
-}
-/* Colores para flash messages (usar variables si están definidas) */
-.flash-message.success { background-color: var(--success-bg, #d4edda); color: var(--success-text, #155724); border-color: var(--success-text, #c3e6cb); }
-.flash-message.danger { background-color: var(--error-bg, #f8d7da); color: var(--error-text, #721c24); border-color: var(--error-text, #f5c6cb); }
-.flash-message.info { background-color: var(--info-bg, #d1ecf1); color: var(--info-text, #0c5460); border-color: var(--info-text, #bee5eb); }
-.flash-message.warning { background-color: var(--warning-bg, #fff3cd); color: var(--warning-text, #856404); border-color: var(--warning-text, #ffeeba); }
-
-/* Colores flash messages dark mode */
-body.dark-mode .flash-message.success { background-color: var(--success-bg, #1f422e); color: var(--success-text, #a7d7b4); border-color: var(--success-text, #a7d7b4); }
-body.dark-mode .flash-message.danger { background-color: var(--error-bg, #4d2429); color: var(--error-text, #f1b0b7); border-color: var(--error-text, #f1b0b7); }
-body.dark-mode .flash-message.info { background-color: var(--info-bg, #17a2b8); color: var(--info-text, #0d4f5d); border-color: var(--info-text, #117a8b); }
-body.dark-mode .flash-message.warning { background-color: var(--warning-bg, #ffc107); color: var(--warning-text, #856404); border-color: var(--warning-text, #d39e00); }
-
-/* Animación de desvanecimiento */
-.flash-message.fade-out { opacity: 0; transform: translateY(-20px); }
-
-
-/* --- Estilos Ocultos (Mantener si los usas en JS) --- */
-.oculto { display: none !important; }
-
-
-/* --- Media Queries (Ajustes responsive) --- */
-/* REVISA Y AJUSTA ESTOS BREAKPOINTS Y ESTILOS SEGÚN TUS NECESIDADES Y TAMAÑOS DE PANTALLA COMUNES */
-
-@media (max-width: 1650px) {
-     /* Ejemplo: Reducir el max-width del contenedor ligeramente antes de que aparezca el scroll en pantallas muy grandes */
-     #compras-dashboard-wrapper .container {
-          max-width: 1550px; /* AJUSTA */
-     }
+/* Opcional: Estilo para la fila mientras se actualiza (solo visual) */
+tr.updating {
+    opacity: 0.6; /* Hacer la fila ligeramente transparente */
+    /* Puedes añadir un spinner o loader aquí si lo deseas */
 }
 
-@media (max-width: 1400px) {
-     /* Cuando la pantalla es menor que el max-width "ideal" */
-     #compras-dashboard-wrapper .container {
-          max-width: 98%; /* Permitir que el contenedor ocupe un alto porcentaje del ancho de la ventana */
-     }
-     /* La tabla probablemente empezará a requerir overflow-x si los min-widths/widths son grandes */
+/* Estilos opcionales para el span del estatus dentro de la celda */
+.solicitud-estatus-celda .current-estatus-text {
+    padding: 3px 8px;
+    border-radius: 12px; /* Forma de "píldora" */
+    font-size: 0.85em;
+    font-weight: bold;
+    white-space: nowrap; /* Evita saltos de línea */
 }
 
-
-@media (max-width: 1200px) {
-    #compras-dashboard-wrapper .container {
-        padding: 30px; /* Ajusta padding */
-         max-width: 98%; /* Continúa ocupando un alto porcentaje */
-    }
-    #compras-dashboard-wrapper .container .titulo-pagina { font-size: 2.4rem; margin-bottom: 25px; }
-    #compras-dashboard-wrapper .container h2 { font-size: 1.8rem; margin-top: 25px; }
-
-     /* Puedes reducir min-widths de columna aquí si es necesario para reducir el ancho total y el scroll */
-     /* La tabla probablemente requerirá scroll horizontal en estas pantallas */
-
-     /* Ejemplo: reducir min-widths de algunas columnas */
-     /* #solicitudes-table-compras th:nth-child(3), #solicitudes-table-compras td:nth-child(3) { min-width: 180px; } */ /* Material */
-     /* #solicitudes-table-compras th:nth-child(9), #solicitudes-table-compras td:nth-child(9) { min-width: 200px; } */ /* Especificaciones */
-     /* #solicitudes-table-compras th:nth-child(1), #solicitudes-table-compras td:nth-child(1) { min-width: 100px; } */ /* Folio */
-
-
+/* Clases para los colores de los estatus (EJEMPLOS) */
+/* Ajusta estos colores según tu diseño */
+.status-badge.status-pendiente {
+    background-color: #ffc107; /* Amarillo */
+    color: #212529;
 }
 
-
-@media (max-width: 992px) { /* Pantallas de tabletas en landscape */
-    #compras-dashboard-wrapper .container {
-        padding: 25px;
-    }
-    #compras-dashboard-wrapper .container .titulo-pagina { font-size: 2.2rem; margin-bottom: 20px; }
-    #compras-dashboard-wrapper .container h2 { font-size: 1.6rem; margin-top: 20px; }
-
-     /* Aquí la tabla casi seguro que requerirá scroll o una técnica responsiva más compleja */
-     /* Ajusta min-widths para que la suma total no sea excesiva, permitiendo el scroll. */
-
-      /* Reducción más agresiva de min-widths si es necesario */
-     /* #solicitudes-table-compras th, #solicitudes-table-compras td { min-width: 80px; } */
-     /* #solicitudes-table-compras th:nth-child(3), #solicitudes-table-compras td:nth-child(3) { min-width: 150px; } */ /* Material */
-     /* #solicitudes-table-compras th:nth-child(9), #solicitudes-table-compras td:nth-child(9) { min-width: 180px; } */ /* Especificaciones */
-
-
+.status-badge.status-en-proceso {
+    background-color: #007bff; /* Azul */
+    color: #fff;
 }
 
-@media (max-width: 768px) { /* Pantallas de tabletas en portrait */
-    #compras-dashboard-wrapper .container {
-        padding: 20px; width: 98%; max-width: unset; /* Ocupa casi todo el ancho disponible */
-    }
-    #compras-dashboard-wrapper .container .titulo-pagina { font-size: 2rem; margin-bottom: 20px; }
-    #compras-dashboard-wrapper .container h2 { font-size: 1.5rem; margin-top: 20px; padding-left: 8px; }
-
-     /* En tabletas pequeñas y móviles, la tabla probablemente siempre usará scroll horizontal. */
-     /* Asegúrate de que los elementos dentro de las celdas (select, badge, link) tengan espacio mínimo. */
-     /* Considera ocultar columnas menos esenciales en pantallas más pequeñas (Ejemplo comentado) */
-     /* #solicitudes-table-compras th:nth-child(6), #solicitudes-table-compras td:nth-child(6), */
-     /* #solicitudes-table-compras th:nth-child(7), #solicitudes-table-compras td:nth-child(7), */
-     /* #solicitudes-table-compras th:nth-child(9), #solicitudes-table-compras td:nth-child(9) { */
-     /*      display: none; */ /* Ocultar columnas */
-     /* } */
-
-     /* Ajustar el ancho del contenedor de mensajes flash */
-     .message-container { width: calc(100% - 40px); max-width: unset; }
-
+.status-badge.status-completada {
+    background-color: #28a745; /* Verde */
+    color: #fff;
 }
 
-@media (max-width: 576px) { /* Smartphones grandes */
-     #compras-dashboard-wrapper .container { padding: 15px; }
-     #compras-dashboard-wrapper .container .titulo-pagina { font-size: 1.8rem; margin-bottom: 15px; }
-     #compras-dashboard-wrapper .container h2 { font-size: 1.4rem; margin-top: 15px; padding-left: 8px; }
-
-     /* Reducir padding de celdas */
-     #solicitudes-table-compras th, #solicitudes-table-compras td { padding: 8px 10px; }
-
-     /* Ajusta el ancho del contenedor de mensajes flash */
-     .message-container { width: calc(100% - 30px); max-width: unset; }
-
-      /* Ocultar más columnas si es necesario en móviles */
-     /* #solicitudes-table-compras th:nth-child(2), #solicitudes-table-compras td:nth-child(2), */ /* Proveedor */
-     /* #solicitudes-table-compras th:nth-child(5), #solicitudes-table-compras td:nth-child(5) { */ /* Fecha Solicitud */
-     /*      display: none; */
-     /* } */
+.status-badge.status-cancelada {
+    background-color: #dc3545; /* Rojo */
+    color: #fff;
 }
 
-@media (max-width: 400px) { /* Smartphones pequeños */
-     #compras-dashboard-wrapper .container { padding: 10px; }
-     /* Reducir anchos mínimos aún más si es necesario */
-     /* #solicitudes-table-compras th, #solicitudes-table-compras td { min-width: 60px; } */ /* Ejemplo: un min-width muy pequeño */
+/* Añade más clases si tienes otros estatus en Notion */
+/* Asegúrate de que la clase coincida con el nombre del estatus en minúsculas y con guiones */
+/* por ejemplo, "En Revisión" -> status-en-revision */
+
+/* Estilo para los enlaces "Ver" */
+.view-in-notion-link {
+    display: inline-block;
+    margin-top: 5px; /* Espacio si está en una celda con otro contenido */
+    padding: 3px 8px;
+    background-color: var(--primario); /* Usa tu color primario */
+    color: var(--blanco);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
 }
 
-
-/* --- Estilos Ocultos (Mantener si los usas en JS) --- */
-.oculto { display: none !important; }
+.view-in-notion-link:hover {
+    background-color: darken(var(--primario), 10%); /* Oscurece el color al pasar el ratón */
+    /* Nota: darken() es una función de preprocesador (ej. Sass/Less), si usas CSS puro, calcula el color manualmente */
+    /* Si usas CSS puro, puedes usar un color fijo o HSL/RGBA para oscurecer */
+}
