@@ -136,7 +136,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- Funcionalidad Adicional (si la hay) ---
-    // Puedes añadir aquí más listeners de eventos o lógica de JavaScript que necesites para el dashboard de compras.
 
-}); // Fin de DOMContentLoaded
+    // --- Funcionalidad de Filtrado ---
+    // Seleccionar el botón y los selectores de filtro por sus IDs
+    const applyFiltersButton = document.getElementById('apply-filters-button'); // Asegúrate de que el botón tenga este ID
+    // Actualizar IDs para que coincidan con el template HTML
+    const estatusSelect = document.getElementById('estatus-filter');
+    const proyectoSelect = document.getElementById('proyecto-filter');
+
+    if (applyFiltersButton && estatusSelect && proyectoSelect) {
+        applyFiltersButton.addEventListener('click', function() {
+            const baseUrl = '/compras/';
+            const queryParams = [];
+
+            const selectedEstatus = estatusSelect.value;
+            if (selectedEstatus && selectedEstatus !== 'all') {
+                queryParams.push(`estatus=${encodeURIComponent(selectedEstatus)}`);
+            }
+
+            const selectedProyectoCode = proyectoSelect.value; // Usar el código del proyecto
+            if (selectedProyectoCode && selectedProyectoCode !== '') { // La opción "Todos" tiene value="" en el HTML
+                queryParams.push(`proyecto=${encodeURIComponent(selectedProyectoCode)}`); // Usar el código del proyecto para el backend
+            }
+
+            const newUrl = baseUrl + (queryParams.length > 0 ? '?' + queryParams.join('&') : '');
+
+            window.location.href = newUrl;
+        });
+    }
+});

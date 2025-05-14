@@ -36,6 +36,36 @@
 
 
             {# --- Mostrar la Lista de Solicitudes --- #}
+
+            {# Sección de Filtros #}
+            <div class="filter-section" style="margin-bottom: 20px; padding: 15px; border: 1px solid #444; border-radius: 5px; background-color: #333;">
+                <h3 style="margin-top: 0; color: #fff;">Filtrar Solicitudes</h3>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div>
+                        <label for="estatus-filter" style="color: #bbb;">Estatus:</label>
+                        <select id="estatus-filter" style="padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: #eee;">
+                            <option value="">Todos</option> {# Opción para mostrar todos los estatus #}
+                            {% for estatus in estatus_options %}
+                                <option value="{{ estatus }}" {% if filter_estatus == estatus %}selected{% endif %}>{{ estatus }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="proyecto-filter" style="color: #bbb;">Proyecto:</label>
+                        <select id="proyecto-filter" style="padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: #eee;">
+                            <option value="">Todos</option> {# Opción para mostrar todos los proyectos #}
+                            {% for project in proyectos_list %}
+                                {# Usamos el ID del proyecto como valor y el código/nombre como texto visible #}
+                                <option value="{{ project.id }}" {% if filter_proyecto_code == project.code %}selected{% endif %}>{{ project.code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button id="apply-filters-button" style="padding: 8px 15px; border: none; border-radius: 4px; background-color: #5cb85c; color: white; cursor: pointer;">
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+
             <h2>Solicitudes (Vista Compras)</h2>
 
             {# Iterar sobre los grupos de solicitudes (por proyecto) #}
@@ -89,8 +119,8 @@
                                         {% set fecha_prop = solicitud.properties.get('Fecha de solicitud') %}
                                         {# Verificar si la propiedad existe, es de tipo date, y tiene un valor de inicio #}
                                         {% if fecha_prop and fecha_prop.type == 'date' and fecha_prop.date and fecha_prop.date.start %}
-                                            {# Mostrar directamente el inicio de la fecha (YYYY-MM-DD si no hay hora) #}
-                                            {{ fecha_prop.date.start }}
+                                             {# Mostrar directamente el inicio de la fecha (YYYY-MM-DD si no hay hora) #}
+ {{ fecha_prop.date.start }}
                                         {% else %}
                                              N/A
                                         {% endif %}

@@ -485,6 +485,61 @@ def submit_request_for_material_logic(
             # No hay notion_error_details para errores no APIResponseError
         }
 
+# Añadir esta función a autointelli/notion/utils.py
+
+def find_page_id_by_property_value(notion_client, database_id, property_name, property_value, property_types):
+    """
+    Busca el ID de una página en una base de datos de Notion basándose en el valor de una propiedad.
+
+    Args:
+        notion_client: Instancia del cliente de Notion.
+        database_id: ID de la base de datos donde buscar.
+        property_name: Nombre de la propiedad a buscar.
+        property_value: Valor exacto que debe tener la propiedad.
+        property_types: Lista de tipos de propiedad esperados (ej: ['rich_text', 'title']).
+
+    Returns:
+        El ID de la página encontrada (el primero que coincida), o None si no se encuentra ninguna.
+    """
+    # Construir el filtro para la consulta
+    # Esta es una simplificación; deberías ajustar la construcción del filtro
+    # basándote en los property_types que esperas (ej: text, number, select, etc.)
+    # Para rich_text y title, podemos usar el filtro 'contains'.
+    # Para otros tipos, podrías necesitar otros filtros (ej: 'equals' para select/number)
+    filter_condition = None
+    if 'rich_text' in property_types or 'title' in property_types:
+         filter_condition = {
+             "property": property_name,
+             "rich_text": { # O "title" si solo buscas títulos
+                 "equals": property_value
+             }
+         }
+    # Aquí podrías añadir lógica para otros tipos de propiedad si es necesario
+
+
+    if not filter_condition:
+        logger.warning(f"No se pudo construir un filtro para la propiedad '{property_name}' con los tipos {property_types}.")
+        return None
+
+    try:
+        # Realizar la consulta a la base de datos
+        response = notion_client.databases.query(
+            database_id=database_id,
+            filter=filter_condition
+        )
+
+        # Si se encontraron resultados, devolver el ID de la primera página
+        if response and response.get('results'):
+            # logger.debug(f"Encontrada página con ID: {response['results'][0]['id']} para '{property_name}' = '{property_value}'")
+            return response['results'][0]['id']
+        else:
+            logger.warning(f"No se encontró ninguna página en la base de datos '{database_id}' donde la propiedad '{property_name}' sea igual a '{property_value}'.")
+            return None
+
+    except Exception as e:
+        logger.error(f"Error al buscar página por propiedad '{property_name}' con valor '{property_value}' en base de datos '{database_id}': {e}", exc_info=True)
+        return None
+
 
     # --- 5. Éxito en la creación de ambas páginas ---
     # Si llegamos aquí, ambas páginas se crearon correctamente.

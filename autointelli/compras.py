@@ -5,7 +5,9 @@ from flask_login import login_required, current_user
 from .models import db, AuditLog
 from .decorators import role_required
 # Importar funciones para consultar/actualizar Notion
-from .notion.utils import get_pages_with_filter_util, update_notion_page_properties, build_filter_from_properties_util
+# Importar la nueva función find_page_id_by_property_value
+from .notion.utils import get_pages_with_filter_util, update_notion_page_properties, build_filter_from_properties_util, find_page_id_by_property_value
+
 
 import logging
 from collections import defaultdict # Importar defaultdict para facilitar la agrupación
@@ -31,6 +33,60 @@ def compras_dashboard():
     # Usar defaultdict para agrupar solicitudes por proyecto más fácilmente
     grouped_solicitudes = defaultdict(list)
 
+    # --- Lógica para obtener y aplicar filtros ---
+    filters_for_compras = []
+    filter_estatus = request.args.get('estatus')
+    filter_proyecto_code = request.args.get('proyecto')
+
+    logger.info(f"[{current_user.username}] Compras: Filtros recibidos - Estatus: {filter_estatus}, Proyecto: {filter_proyecto_code}")
+
+
+    if filter_estatus:
+        # Construir filtro para la propiedad 'Estatus' (select)
+        filters_for_compras.append({
+            "property": "Estatus",
+            "select": {
+                "equals": filter_estatus
+            }
+        })
+        logger.debug(f"[{current_user.username}] Compras: Añadido filtro por Estatus: {filter_estatus}")
+
+
+    if filter_proyecto_code and database_id_proyectos:
+        # Si se proporciona un código de proyecto, buscar el ID de la página del proyecto
+        logger.debug(f"[{current_user.username}] Compras: Buscando ID de proyecto para código '{filter_proyecto_code}' en DB {database_id_proyectos}")
+        try:
+             # Usar la nueva función auxiliar para encontrar el ID de la página del proyecto por su código
+             project_page_id = find_page_id_by_property_value(
+                 notion_client,
+                 database_id_proyectos,
+                 "ID del proyecto", # Nombre de la propiedad en la base de datos de Proyectos
+                 filter_proyecto_code,
+                 ['rich_text', 'title'] # Tipos de propiedad a buscar
+             )
+
+             if project_page_id:
+                 # Si se encuentra el ID de la página del proyecto, construir filtro para la propiedad 'Proyecto' (relation)
+                 filters_for_compras.append({
+                     "property": "Proyecto",
+                     "relation": {
+                         "contains": project_page_id
+                     }
+                 })
+                 logger.debug(f"[{current_user.username}] Compras: Añadido filtro por Proyecto con ID: {project_page_id}")
+             else:
+                 logger.warning(f"[{current_user.username}] Compras: No se encontró ID de proyecto para el código '{filter_proyecto_code}'. No se aplicará el filtro de proyecto.")
+
+        except Exception as e:
+             logger.error(f"[{current_user.username}] Compras: Error al buscar ID de proyecto para código '{filter_proyecto_code}': {e}", exc_info=True)
+             # Opcional: Podrías añadir un error_msg aquí si quieres notificar al usuario que el filtro de proyecto falló.
+             pass # Continuar sin el filtro de proyecto si la búsqueda falla
+
+
+    logger.info(f"[{current_user.username}] Compras: Filters being applied to Notion query: {filters_for_compras if filters_for_compras else 'Ninguno'}")
+    # --- Fin de la lógica para obtener y aplicar filtros ---
+
+
     if not notion_client:
         error_msg = "Cliente Notion no inicializado."
         logger.error(f"[{current_user.username}] {error_msg}")
@@ -49,20 +105,62 @@ def compras_dashboard():
          flash(error_msg, "danger")
     else:
          try:
-              # Define los filtros relevantes para Compras (ej: ver todas, o filtrar por estatus)
-              filters_for_compras = [] # Ejemplo: Obtener todas las solicitudes (sin filtros)
-
-              logger.info(f"[{current_user.username}] Compras: Filters built: {filters_for_compras if filters_for_compras else 'Ninguno'}")
-
+              # Usar get_pages_with_filter_util con los filtros construidos
               solicitudes = get_pages_with_filter_util(notion_client, database_id_solicitudes_compras, filters_for_compras)
-              logger.info(f"[{current_user.username}] Compras: Obtenidas {len(solicitudes)} solicitudes de Notion.")
+              logger.info(f"[{current_user.username}] Compras: Obtenidas {len(solicitudes)} solicitudes de Notion con filtros.")
               if not solicitudes:
-                  logger.warning(f"[{current_user.username}] Compras: No se obtuvieron solicitudes de Notion.")
+                  logger.warning(f"[{current_user.username}] Compras: No se obtuvieron solicitudes de Notion con los filtros aplicados.")
 
+              # --- Lógica para obtener opciones de filtro (Estatus y Proyectos) ---
+              estatus_options = []
+              proyectos_list = [] # Lista para almacenar proyectos con ID y código
 
-              # --- Lógica para obtener detalles de las Partidas y Proyectos relacionados ---
+              if notion_client and database_id_solicitudes_compras:
+                   try:
+                       # Obtener metadatos de la base de datos para obtener las opciones de 'Estatus'
+                       db_metadata = notion_client.databases.retrieve(database_id=database_id_solicitudes_compras)
+                       estatus_prop = db_metadata.get('properties', {}).get('Estatus')
+                       if estatus_prop and estatus_prop.get('type') == 'select' and estatus_prop.get('select') and estatus_prop.get('select').get('options'):
+                           estatus_options = [option['name'] for option in estatus_prop['select']['options']]
+                           logger.debug(f"[{current_user.username}] Compras: Obtenidas opciones de estatus: {estatus_options}")
+                       else:
+                            logger.warning(f"[{current_user.username}] Compras: No se pudieron obtener las opciones de estatus de la base de datos {database_id_solicitudes_compras}.")
+
+                   except Exception as e:
+                        logger.error(f"[{current_user.username}] Error al obtener opciones de estatus de la base de datos {database_id_solicitudes_compras}: {e}", exc_info=True)
+
+              if notion_client and database_id_proyectos:
+                   try:
+                       # Obtener todas las páginas (proyectos) de la base de datos de Proyectos
+                       projects_pages = get_pages_with_filter_util(notion_client, database_id_proyectos) # Sin filtro para obtener todos
+                       logger.debug(f"[{current_user.username}] Compras: Obtenidas {len(projects_pages)} páginas de la base de datos de Proyectos {database_id_proyectos}.")
+
+                       # Extraer ID y código de cada proyecto
+                       for project_page in projects_pages:
+                           project_id = project_page.get('id')
+                           project_id_prop = project_page.get('properties', {}).get('ID del proyecto')
+                           if project_id and project_id_prop and (project_id_prop.get('type') == 'rich_text' or project_id_prop.get('type') == 'title'):
+                               project_code = "".join([text_part.get('text', {}).get('content', '') for text_part in project_id_prop.get(project_id_prop.get('type'), [])])
+                               if project_code: # Asegurarse de que el código no esté vacío
+                                   proyectos_list.append({'id': project_id, 'code': project_code})
+                                   logger.debug(f"[{current_user.username}] Compras: Proyecto con ID '{project_id}' y código '{project_code}' añadido a la lista.")
+                           else:
+                                logger.warning(f"[{current_user.username}] Página de proyecto con ID {project_id} no tiene una propiedad 'ID del proyecto' válida o está vacía.")
+
+                       # Opcional: Ordenar la lista de proyectos por código
+                       proyectos_list.sort(key=lambda x: x['code'])
+
+                       logger.info(f"[{current_user.username}] Compras: Lista de proyectos enviada al template: {proyectos_list}")
+
+                   except Exception as e:
+                        logger.error(f"[{current_user.username}] Error al obtener la lista de proyectos de la base de datos {database_id_proyectos}: {e}", exc_info=True)
+
+              # --- Fin de la lógica para obtener opciones de filtro ---
+
+              # --- Lógica para obtener detalles de las Partidas y Proyectos relacionados y agrupar ---
+              # Esta lógica se aplica AHORA a la lista de solicitudes FILTRADA
               for solicitud in solicitudes:
-                  logger.debug(f"[{current_user.username}] Procesando solicitud ID: {solicitud.get('id')}")
+                  logger.debug(f"[{current_user.username}] Procesando solicitud ID: {solicitud.get('id')} para agrupación y detalles.")
                   # Lógica para Partidas (existente)
                   partida_details_list = []
                   partida_prop = solicitud.get('properties', {}).get('Partida')
@@ -126,7 +224,7 @@ def compras_dashboard():
                   logger.debug(f"[{current_user.username}] Solicitud {solicitud.get('id')} añadida al grupo '{project_name}'.")
 
 
-              # --- Fin de la lógica para obtener detalles de Proyectos ---
+              # --- Fin de la lógica para obtener detalles de Proyectos y agrupar ---
 
               logger.info(f"[{current_user.username}] Compras: Proceso de agrupación completado. Grupos creados: {list(grouped_solicitudes.keys())}")
               for project_name, solicitudes_list in grouped_solicitudes.items():
@@ -139,7 +237,7 @@ def compras_dashboard():
               flash(error_msg, "danger")
 
     # Pasar los datos agrupados al template
-    return render_template('compras/dashboard_compras.html', grouped_solicitudes=grouped_solicitudes, error_msg=error_msg)
+    return render_template('compras/dashboard_compras.html', grouped_solicitudes=grouped_solicitudes, error_msg=error_msg, filter_estatus=filter_estatus, filter_proyecto_code=filter_proyecto_code, estatus_options=estatus_options, proyectos_list=proyectos_list) # Pasar también los filtros actuales, opciones de estatus y lista de proyectos al template
 
 
 # --- RUTA POST para actualizar el estatus de una solicitud ---
@@ -156,17 +254,11 @@ def update_solicitud_status(page_id):
         logger.warning(f"[{current_user.username}] Solicitud de actualización para {page_id} sin datos recibidos.")
         return jsonify({"error": "Datos inválidos: no se recibieron datos."}), 400 # Bad Request
 
-    # Validar que los datos recibidos tienen la estructura esperada para la actualización
-    # Por ejemplo, si solo esperas un nuevo estatus:\
-    # if \'status\' not in data or not isinstance(data[\'status\'], str):\
-    #     logger.warning(f\"[{current_user.username}] Solicitud de actualización para {page_id} sin campo \'status\' o tipo incorrecto.\")
-    #     return jsonify({\"error\": \"Datos inválidos: se esperaba un campo \'status\' (string).\"}), 400
-
     # Si esperas un diccionario de propiedades a actualizar (más flexible):
     properties_to_update = data.get('properties', {}) # Asume que el frontend envía {"properties": {...}}
     if not isinstance(properties_to_update, dict) or not properties_to_update:
-        logger.warning(f"[{current_user.username}] Solicitud de actualización para {page_id} sin diccionario 'properties' o está vacío.")
-        return jsonify({"error": "Datos inválidos: se esperaba un diccionario no vacío en el campo 'properties'."}), 400
+         logger.warning(f"[{current_user.username}] Solicitud de actualización para {page_id} sin diccionario 'properties' o está vacío.")
+         return jsonify({"error": "Datos inválidos: se esperaba un diccionario no vacío en el campo 'properties'."}), 400
 
 
     # Obtener el cliente Notion desde la configuración central
