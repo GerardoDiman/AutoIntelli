@@ -38,78 +38,84 @@
             {# --- Mostrar la Lista de Solicitudes --- #}
             <h2>Solicitudes (Vista Compras)</h2>
 
-            {% if solicitudes %}
-                {# Iniciar la tabla para mostrar las solicitudes #}
-                <table id="solicitudes-table-compras">
-                    {# Encabezados de la tabla #}
-                    <thead>
-                        <tr>
-                            <th>Folio</th>
-                            <th>Fecha</th>
-                            <th>Solicitante</th>
-                            <th>Material</th>
-                            <th>Cant.</th>
-                            <th>Partida</th> {# Esta columna ahora intentará mostrar el código completo #}
-                            <th>Urgente</th>
-                            <th>Estatus</th> {# Columna para mostrar el estatus actual #}
-                            <th>Actualizar Estatus</th> {# Nueva columna para el select de actualización #}
-                            <th>Acción</th> {# Columna para enlaces/botones adicionales #}
-                        </tr>
-                    </thead>
-                    {# Cuerpo de la tabla #}
-                    <tbody>
-                        {# Iterar sobre cada solicitud en la lista #}
-                        {% for solicitud in solicitudes %}
-                        <tr data-page-id="{{ solicitud.id }}"> {# Añadir atributo data-page-id a la fila para fácil referencia #}
+            {# Iterar sobre los grupos de solicitudes (por proyecto) #}
+            {% if grouped_solicitudes %}
+                {% for project_name, solicitudes_list in grouped_solicitudes.items() %}
+                    {# Mostrar el nombre del proyecto como un encabezado #}
+                    <h2>Proyecto: {{ project_name }}</h2>
 
-                            {# --- Mostrar datos reales de Notion en las celdas --- #}
+                    {% if solicitudes_list %}
+                        {# Iniciar la tabla para mostrar las solicitudes de este proyecto #}
+                        <table id="solicitudes-table-compras-{{ project_name | lower | replace(' ', '-') | replace('/', '-') }}"> {# ID único para cada tabla #}
+                            {# Encabezados de la tabla #}
+                            <thead>
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Fecha de solicitud</th>
+                                    <th>Nombre del solicitante</th>
+                                    <th>Material</th>
+                                    <th>Cantidad</th>
+                                    <th>Partida</th> {# Esta columna ahora intentará mostrar el código completo #}
+                                    <th>Urgente</th>
+                                    <th>Estatus Actual</th> {# Columna para mostrar el estatus actual #}
+                                    <th>Actualizar Estatus</th> {# Nueva columna para el select de actualización #}
+                                    <th>Acciones</th> {# Columna para enlaces/botones adicionales #}
+                                </tr>
+                            </thead>
+                            {# Cuerpo de la tabla #}
+                            <tbody>
+                                {# Iterar sobre cada solicitud en la lista de este proyecto #}
+                                {% for solicitud in solicitudes_list %}
+                                <tr data-page-id="{{ solicitud.id }}"> {# Añadir atributo data-page-id a la fila para fácil referencia #}
 
-                            {# <td> para Folio #}
-                            <td>{# Acceder a la propiedad 'properties' y luego a la propiedad específica #}
-                                {% set folio_prop = solicitud.properties.get('Folio de solicitud') %}
-                                {# Verificar si la propiedad existe y es de tipo rich_text o title #}
-                                {% if folio_prop and (folio_prop.type == 'rich_text' or folio_prop.type == 'title') %}
-                                    {# Concatenar el contenido de todos los segmentos de texto #}
-                                    {% for text_part in folio_prop.get(folio_prop.type, []) %}
-                                        {{ text_part.text.content }}
-                                    {% endfor %}
-                                {% else %}
-                                    Sin folio
-                                {% endif %}
-                            </td>
+                                    {# --- Mostrar datos reales de Notion en las celdas --- #}
 
-                            {# <td> para Fecha de solicitud (Formato YYYY-MM-DD) #}
-                            <td> {# Acceder a la propiedad 'Fecha de solicitud' #}
-                                {% set fecha_prop = solicitud.properties.get('Fecha de solicitud') %}
-                                {# Verificar si la propiedad existe, es de tipo date, y tiene un valor de inicio #}
-                                {% if fecha_prop and fecha_prop.type == 'date' and fecha_prop.date and fecha_prop.date.start %}
-                                     {# Mostrar directamente el inicio de la fecha (YYYY-MM-DD si no hay hora) #}
-                                     {{ fecha_prop.date.start }}
-                                {% else %}
-                                     N/A
-                                {% endif %}
-                            </td>
+                                    {# <td> para Folio #}
+                                    <td>{# Acceder a la propiedad 'properties' y luego a la propiedad específica #}
+                                        {% set folio_prop = solicitud.properties.get('Folio de solicitud') %}
+                                        {# Verificar si la propiedad existe y es de tipo rich_text o title #}
+                                        {% if folio_prop and (folio_prop.type == 'rich_text' or folio_prop.type == 'title') %}
+                                            {# Concatenar el contenido de todos los segmentos de texto #}
+                                            {% for text_part in folio_prop.get(folio_prop.type, []) %}
+                                                {{ text_part.text.content }}
+                                            {% endfor %}
+                                        {% else %}
+                                            Sin folio
+                                        {% endif %}
+                                    </td>
 
-                            {# <td> para Nombre del solicitante (CORREGIDO para Select) #}
-                            <td> {# Acceder a la propiedad 'Nombre del solicitante' #}
-                                {% set solicitante_prop = solicitud.properties.get('Nombre del solicitante') %}
-                                {# Verificar si la propiedad existe y es de tipo rich_text, title, o select #}
-                                {% if solicitante_prop %}
-                                    {% if solicitante_prop.type == 'rich_text' or solicitante_prop.type == 'title' %}
-                                        {% for text_part in solicitante_prop.get(solicitante_prop.type, []) %}
-                                            {{ text_part.text.content }}
-                                        {% endfor %}
-                                    {% elif solicitante_prop.type == 'select' and solicitante_prop.select %}
-                                        {{ solicitante_prop.select.name }}
-                                    {% else %}
-                                        N/A {# Fallback para otros tipos o select sin valor #}
-                                    {% endif %}
-                                {% else %}
-                                    N/A {# Fallback si la propiedad no existe #}
-                                {% endif %}
-                            </td>
+                                    {# <td> para Fecha de solicitud (Formato YYYY-MM-DD) #}
+                                    <td> {# Acceder a la propiedad 'Fecha de solicitud' #}
+                                        {% set fecha_prop = solicitud.properties.get('Fecha de solicitud') %}
+                                        {# Verificar si la propiedad existe, es de tipo date, y tiene un valor de inicio #}
+                                        {% if fecha_prop and fecha_prop.type == 'date' and fecha_prop.date and fecha_prop.date.start %}
+                                            {# Mostrar directamente el inicio de la fecha (YYYY-MM-DD si no hay hora) #}
+                                            {{ fecha_prop.date.start }}
+                                        {% else %}
+                                             N/A
+                                        {% endif %}
+                                    </td>
 
-                            {# <td> para Nombre del material (CORREGIDO para Select) #}
+                                    {# <td> para Nombre del solicitante (CORREGIDO para Select) #}
+                                    <td> {# Acceder a la propiedad 'Nombre del solicitante' #}
+                                        {% set solicitante_prop = solicitud.properties.get('Nombre del solicitante') %}
+                                        {# Verificar si la propiedad existe y es de tipo rich_text, title, o select #}
+                                        {% if solicitante_prop %}
+                                            {% if solicitante_prop.type == 'rich_text' or solicitante_prop.type == 'title' %}
+                                                {% for text_part in solicitante_prop.get(solicitante_prop.type, []) %}
+                                                    {{ text_part.text.content }}
+                                                {% endfor %}
+                                            {% elif solicitante_prop.type == 'select' and solicitante_prop.select %}
+                                                {{ solicitante_prop.select.name }}
+                                            {% else %}
+                                                N/A {# Fallback para otros tipos o select sin valor #}
+                                            {% endif %}
+                                        {% else %}
+                                            N/A {# Fallback si la propiedad no existe #}
+                                        {% endif %}
+                                    </td>
+
+                                    {# <td> para Nombre del material (CORREGIDO para Select) #}
                             <td> {# Acceder a la propiedad 'Nombre del material' #}
                                 {% set material_prop = solicitud.properties.get('Nombre del material') %}
                                 {# Verificar si la propiedad existe y es de tipo rich_text, title, o select #}
@@ -128,85 +134,89 @@
                                 {% endif %}
                             </td>
 
-                            {# <td> para Cantidad #}
-                            <td> {# Acceder a la propiedad 'Cantidad solicitada' #}
-                                {% set cantidad_prop = solicitud.properties.get('Cantidad solicitada') %}
-                                {% if cantidad_prop is not none and cantidad_prop.type == 'number' and cantidad_prop.number is not none %}
-                                     {{ cantidad_prop.number }}
-                                {% else %}
-                                     0
-                                {% endif %}
-                            </td>
+                                    {# <td> para Cantidad #}
+                                    <td> {# Acceder a la propiedad 'Cantidad solicitada' #}
+                                        {% set cantidad_prop = solicitud.properties.get('Cantidad solicitada') %}
+                                        {% if cantidad_prop is not none and cantidad_prop.type == 'number' and cantidad_prop.number is not none %}
+                                             {{ cantidad_prop.number }}
+                                        {% else %}
+                                             0
+                                        {% endif %}
+                                    </td>
 
-                            {# <td> para Partida (Modificado para mostrar el código completo sin viñetas) #}
-                                <td>
-                                    {% set partida_details = solicitud.get('partida_details', []) %} {# Asumimos que Python añadió esta clave #}
-                                    {% if partida_details %}
-                                        {# Unir los títulos de las partidas relacionadas en una sola cadena #}
-                                        {# Asegúrate de que el atributo 'title' es el correcto si la propiedad en Notion se llama diferente #}
-                                        {{ partida_details | map(attribute='title') | join(', ') if partida_details else 'Sin Partida' }}
-                                    {% elif solicitud.properties.get('Partida') and solicitud.properties.get('Partida').get('relation') is not none %}
-                                        {# Si la propiedad de relación existe pero no se pudieron cargar los detalles en Python #}
-                                        Detalles de Partida no disponibles
-                                    {% else %}
-                                        {# Si la propiedad de relación no existe o no tiene relaciones #}
-                                        Sin vincular
-                                    {% endif %}
-                                </td>
+                                    {# <td> para Partida (Modificado para mostrar el código completo sin viñetas) #}
+                                        <td>
+                                            {% set partida_details = solicitud.get('partida_details', []) %} {# Asumimos que Python añadió esta clave #}
+                                            {% if partida_details %}
+                                                {# Unir los títulos de las partidas relacionadas en una sola cadena #}
+                                                {# Asegúrate de que el atributo 'title' es el correcto si la propiedad en Notion se llama diferente #}
+                                                {{ partida_details | map(attribute='title') | join(', ') if partida_details else 'Sin Partida' }}
+                                            {% elif solicitud.properties.get('Partida') and solicitud.properties.get('Partida').get('relation') is not none %}
+                                                {# Si la propiedad de relación existe pero no se pudieron cargar los detalles en Python #}
+                                                Detalles de Partida no disponibles
+                                            {% else %}
+                                                {# Si la propiedad de relación no existe o no tiene relaciones #}
+                                                Sin vincular
+                                            {% endif %}
+                                        </td>
 
-                            {# <td> para Urgente #}
-                            <td> {# Acceder a la propiedad 'Urgente' #}
-                                {% set urgente_prop = solicitud.properties.get('Urgente') %}
-                                {% if urgente_prop is not none and urgente_prop.type == 'checkbox' %}
-                                    {{ 'Sí' if urgente_prop.checkbox else 'No' }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
+                                    {# <td> para Urgente #}
+                                    <td> {# Acceder a la propiedad 'Urgente' #}
+                                        {% set urgente_prop = solicitud.properties.get('Urgente') %}
+                                        {% if urgente_prop is not none and urgente_prop.type == 'checkbox' %}
+                                            {{ 'Sí' if urgente_prop.checkbox else 'No' }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
 
-                            {# <td> para Estatus Actual #}
-                            <td class="solicitud-estatus-celda" data-page-id="{{ solicitud.id }}">
-                                {% set estatus_prop = solicitud.properties.get('Estatus') %}
-                                {% if estatus_prop and estatus_prop.type == 'select' and estatus_prop.select %}
-                                    {% set raw_estatus_name = estatus_prop.select.name %}
-                                    {% set estatus_name_class = raw_estatus_name | lower | replace(' ', '-') | replace('/', '-') %}
-                                    <span class="current-estatus-text status-badge status-{{ estatus_name_class }}">
-                                        {{ raw_estatus_name }}
-                                    </span>
-                                {% else %}
-                                    <span class="current-estatus-text">N/A</span>
-                                {% endif %}
-                            </td>
+                                    {# <td> para Estatus Actual #}
+                                    <td class="solicitud-estatus-celda" data-page-id="{{ solicitud.id }}">
+                                        {% set estatus_prop = solicitud.properties.get('Estatus') %}
+                                        {% if estatus_prop and estatus_prop.type == 'select' and estatus_prop.select %}
+                                            {% set raw_estatus_name = estatus_prop.select.name %}
+                                            {% set estatus_name_class = raw_estatus_name | lower | replace(' ', '-') | replace('/', '-') %}
+                                            <span class="current-estatus-text status-badge status-{{ estatus_name_class }}">
+                                                {{ raw_estatus_name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="current-estatus-text">N/A</span>
+                                        {% endif %}
+                                    </td>
 
-                            {# <td> para Actualizar Estatus #}
-                            <td>
-                                <select class="update-estatus-select">
-                                    <option value="" selected disabled>Cambiar Estatus</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="En Proceso">En Proceso</option>
-                                    <option value="Completada">Completada</option>
-                                    <option value="Cancelada">Cancelada</option>
-                                </select>
-                            </td>
+                                    {# <td> para Actualizar Estatus #}
+                                    <td>
+                                        <select class="update-estatus-select">
+                                            <option value="" selected disabled>Cambiar Estatus</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="En Proceso">En Proceso</option>
+                                            <option value="Completada">Completada</option>
+                                            <option value="Cancelada">Cancelada</option>
+                                        </select>
+                                    </td>
 
-                            {# <td> para Acciones (enlace a Notion) #}
-                            <td class="acciones-celda"> {# Puedes añadir una clase para estilizar esta celda #}
-                                <a href="{{ solicitud.url }}" target="_blank" rel="noopener noreferrer" class="view-in-notion-link">Ver</a>
-                            </td>
+                                    {# <td> para Acciones (enlace a Notion) #}
+                                    <td class="acciones-celda"> {# Puedes añadir una clase para estilizar esta celda #}
+                                        <a href="{{ solicitud.url }}" target="_blank" rel="noopener noreferrer" class="view-in-notion-link">Ver</a>
+                                    </td>
 
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No hay solicitudes para este proyecto.</p>
+                    {% endif %}
+
+                {% endfor %}
             {% else %}
                 {# Mensaje si no hay solicitudes o si hubo un error al cargarlas #}
-                {% if error_msg %}\
+                {% if error_msg %}
                      <p class="error-message-text">Error al cargar solicitudes: {{ error_msg }}</p> {# Muestra el mensaje de error si existe #}
                 {% else %}
                      <p>No hay solicitudes para mostrar.</p>
                 {% endif %}
             {% endif %}
-
 
         </div> {# Cierre de .container #}
 
