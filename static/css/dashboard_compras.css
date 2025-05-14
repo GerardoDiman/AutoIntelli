@@ -10,129 +10,192 @@
 /* o styles.css no se carga ANTES de dashboard_compras.css, descomenta y ajusta este bloque :root */
 /* para definir las variables necesarias para este archivo. */
 
+/* --- Variables (Opcional, si no están definidas globalmente) --- */
 :root {
-   --primario: #D42D2E;             /* Rojo principal */
-   --gris-t: #313131d5;           /* Gris con transparencia */
-   --gris-claro: #858585;         /* Gris claro para texto secundario */
-   --blanco: #FFFFFF;             /* Blanco */
+    --primario: #D42D2E; /* Rojo principal */
+    --fondo-oscuro: #2a2a2a; /* Fondo principal oscuro */
+    --fondo-tabla-header: #3a3a3a; /* Color de fondo para encabezados de tabla */
+    --gris-oscuro-claro: #3a3a3a; /* Gris oscuro ligeramente más claro para fondos */
+    --gris-claro: #b0b0b0; /* Gris claro para texto secundario, ajustado para dark mode */
+    --blanco: #FFFFFF;             /* Blanco */
+    --borde-tabla-sutil: #444; /* Un color de borde sutil para la cuadrícula en tema oscuro */
+    --border-color-light: #ccc;    /* Color de borde claro */
+    --border-color-dark: #555;     /* Color de borde oscuro para dark mode */
+ }
 
-   --border-color-light: #ccc;    /* Color de borde claro */
-   --border-color-dark: #555;     /* Color de borde oscuro para dark mode */
+/* --- Estilos Generales del Dashboard --- */
+/* Estilos para el contenedor principal del dashboard */
+#compras-dashboard-wrapper {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px; /* Espaciado interno */
+    background-color: var(--fondo-oscuro); /* Fondo oscuro */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Sombra */
+    font-family: 'Roboto', sans-serif; /* Fuente */
 }
 
-/* AQUI CONTINUAN TUS ESTILOS ESPECIFICOS PARA EL DASHBOARD DE COMPRAS */
-/* ... (Mantén el resto de tus estilos actuales aquí) ... */
-/* Por ejemplo, estilos para la tabla, títulos, etc. */
+/* Estilo para el título de la página */
+.titulo-pagina { 
+    text-align: center;
+    color: var(--primario);
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--primario);
+    padding-bottom: 10px;
+    font-size: 1.8em;
+}
 
+/* --- Estilos para la Tabla de Solicitudes --- */
+/* Estilos para la tabla */
+#solicitudes-table-compras {
+    width: 100%;
+    border-collapse: collapse; /* Colapsar bordes para la cuadrícula */
+    margin-top: 20px; /* Espacio superior */
+    table-layout: fixed; /* Fija el ancho de las columnas según los th */
+}
 
-/* --- Nuevos estilos para el feedback de actualización --- */
-
-/* Estilos básicos para el div de feedback */
-#compras-update-feedback {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid transparent; /* Borde por defecto transparente */
-    border-radius: 4px;
+#solicitudes-table-compras thead th {
+    background-color: var(--fondo-tabla-header); /* Fondo ligeramente más oscuro para encabezados */
+    color: var(--blanco); /* Texto de encabezado */
     font-weight: bold;
-    min-height: 1.2em; /* Asegura un espacio mínimo aunque no haya texto */
-    /* Transición suave para ocultar */
-    opacity: 1;
-    transition: opacity 0.5s ease-in-out;
+    text-align: left; /* Alinear texto a la izquierda en encabezados */
+    padding: 12px 15px; /* Espaciado interno aumentado */
+    border: 1px solid var(--borde-tabla-sutil); /* Bordes en todos los lados */
 }
 
-/* Estilo para mensajes de procesamiento/carga */
-#compras-update-feedback.processing {
-    color: #0056b3; /* Azul */
-    border-color: #b8daff;
-    background-color: #e0f7fa; /* Azul claro */
+/* Ancho de las columnas (ajustar según necesidad) */
+#solicitudes-table-compras thead th:nth-child(1) { width: 20%; } /* Folio */ /* Ajustar anchos según las columnas actuales */
+#solicitudes-table-compras thead th:nth-child(2) { width: 10%; }  /* Fecha de solicitud */
+#solicitudes-table-compras thead th:nth-child(3) { width: 15%; } /* Nombre del solicitante */
+#solicitudes-table-compras thead th:nth-child(4) { width: 12%; } /* Material */
+#solicitudes-table-compras thead th:nth-child(5) { width: 6%; }  /* Cantidad */
+#solicitudes-table-compras thead th:nth-child(6) { width: 12%; } /* Partida */
+#solicitudes-table-compras thead th:nth-child(7) { width: 8%; }  /* Urgente */
+#solicitudes-table-compras thead th:nth-child(8) { width: 10%; }  /* Estatus Actual */
+#solicitudes-table-compras thead th:nth-child(9) { width: 16%; } /* Actualizar Estatus */
+#solicitudes-table-compras thead th:nth-child(10) { width: 8%; } /* Acciones */ /* El total debería sumar 100% */
+
+ /* Bordes y padding para todas las celdas (th y td) */
+ #solicitudes-table-compras th, 
+ #solicitudes-table-compras td {
+    border: 1px solid var(--borde-tabla-sutil); /* Borde sutil en todos los lados para la cuadrícula */
+    text-align: left;
+    padding: 10px 15px; /* Espaciado interno aumentado */
+    word-wrap: break-word; /* Permite que palabras largas se rompan */
 }
 
-/* Estilo para mensajes de éxito */
-#compras-update-feedback.success {
-    color: #155724; /* Verde oscuro */
-    border-color: #c3e6cb;
-    background-color: #d4edda; /* Verde claro */
+/* Estilo hover para las filas del cuerpo de la tabla */
+#solicitudes-table-compras tbody tr:hover {
+    background-color: var(--gris-oscuro-claro); /* Fondo ligeramente más claro al pasar el ratón */
 }
 
-/* Estilo para mensajes de error */
-#compras-update-feedback.error {
-    color: #721c24; /* Rojo oscuro */
-    border-color: #f5c6cb;
-    background-color: #f8d7da; /* Rojo claro */
-}
+/* --- Estilos para Mensajes de Feedback y Elementos Específicos --- */
+ /* Estilos básicos para el div de feedback */
+ #compras-update-feedback {
+     margin-top: 10px;
+     padding: 10px;
+     border: 1px solid transparent; /* Borde por defecto transparente */
+     border-radius: 4px;
+     font-weight: bold;
+     min-height: 1.2em; /* Asegura un espacio mínimo aunque no haya texto */
+     /* Transición suave para ocultar */
+     opacity: 1;
+     transition: opacity 0.5s ease-in-out;
+ }
+ 
+ /* Estilo para mensajes de procesamiento/carga */
+ #compras-update-feedback.processing {
+     color: #0056b3; /* Azul */
+     border-color: #b8daff;
+     background-color: #e0f7fa; /* Azul claro */
+ }
+ 
+ /* Estilo para mensajes de éxito */
+ #compras-update-feedback.success {
+     color: #155724; /* Verde oscuro */
+     border-color: #c3e6cb;
+     background-color: #d4edda; /* Verde claro */
+ }
+ 
+ /* Estilo para mensajes de error */
+ #compras-update-feedback.error {
+     color: #721c24; /* Rojo oscuro */
+     border-color: #f5c6cb;
+     background-color: #f8d7da; /* Rojo claro */
+ }
+ 
+ /* Estilo para mensajes informativos (si usas la clase 'info') */
+ #compras-update-feedback.info {
+     color: #0c5460; /* Turquesa oscuro */
+     border-color: #bee5eb;
+     background-color: #d1ecf1; /* Turquesa claro */
+ }
+ 
+ /* Estilo para el div de feedback cuando está oculto */
+ #compras-update-feedback:empty {
+     opacity: 0; /* Totalmente transparente cuando está vacío */
+     padding: 0; /* Elimina el padding cuando está vacío */
+     border: none; /* Elimina el borde cuando está vacío */
+     min-height: 0; /* Altura mínima de 0 cuando está vacío */
+ }
+ 
+ /* Opcional: Estilo para la fila mientras se actualiza (solo visual) */
+ tr.updating {
+     opacity: 0.6; /* Hacer la fila ligeramente transparente */
+     /* Puedes añadir un spinner o loader aquí si lo deseas */
+ }
+ 
+ /* Estilos opcionales para el span del estatus dentro de la celda */
+ .solicitud-estatus-celda .current-estatus-text {
+     padding: 3px 8px;
+     border-radius: 12px; /* Forma de "píldora" */
+     font-size: 0.85em;
+     font-weight: bold;
+     white-space: nowrap; /* Evita saltos de línea */
+ }
 
-/* Estilo para mensajes informativos (si usas la clase 'info') */
-#compras-update-feedback.info {
-    color: #0c5460; /* Turquesa oscuro */
-    border-color: #bee5eb;
-    background-color: #d1ecf1; /* Turquesa claro */
-}
+ /* Clases para los colores de los estatus (EJEMPLOS) */
+ /* Ajusta estos colores según tu diseño */
+ .status-badge.status-pendiente {
+     background-color: #ffc107; /* Amarillo */
+     color: #212529;
+ }
+ 
+ .status-badge.status-en-proceso {
+     background-color: #007bff; /* Azul */
+     color: #fff;
+ }
+ 
+ .status-badge.status-completada {
+     background-color: #28a745; /* Verde */
+     color: #fff;
+ }
+ 
+ .status-badge.status-cancelada {
+     background-color: #dc3545; /* Rojo */
+     color: #fff;
+ }
 
-/* Estilo para el div de feedback cuando está oculto */
-#compras-update-feedback:empty {
-    opacity: 0; /* Totalmente transparente cuando está vacío */
-    padding: 0; /* Elimina el padding cuando está vacío */
-    border: none; /* Elimina el borde cuando está vacío */
-    min-height: 0; /* Altura mínima de 0 cuando está vacío */
-}
-
-
-/* Opcional: Estilo para la fila mientras se actualiza (solo visual) */
-tr.updating {
-    opacity: 0.6; /* Hacer la fila ligeramente transparente */
-    /* Puedes añadir un spinner o loader aquí si lo deseas */
-}
-
-/* Estilos opcionales para el span del estatus dentro de la celda */
-.solicitud-estatus-celda .current-estatus-text {
-    padding: 3px 8px;
-    border-radius: 12px; /* Forma de "píldora" */
-    font-size: 0.85em;
-    font-weight: bold;
-    white-space: nowrap; /* Evita saltos de línea */
-}
-
-/* Clases para los colores de los estatus (EJEMPLOS) */
-/* Ajusta estos colores según tu diseño */
-.status-badge.status-pendiente {
-    background-color: #ffc107; /* Amarillo */
-    color: #212529;
-}
-
-.status-badge.status-en-proceso {
-    background-color: #007bff; /* Azul */
-    color: #fff;
-}
-
-.status-badge.status-completada {
-    background-color: #28a745; /* Verde */
-    color: #fff;
-}
-
-.status-badge.status-cancelada {
-    background-color: #dc3545; /* Rojo */
-    color: #fff;
-}
-
-/* Añade más clases si tienes otros estatus en Notion */
-/* Asegúrate de que la clase coincida con el nombre del estatus en minúsculas y con guiones */
-/* por ejemplo, "En Revisión" -> status-en-revision */
-
-/* Estilo para los enlaces "Ver" */
-.view-in-notion-link {
-    display: inline-block;
-    margin-top: 5px; /* Espacio si está en una celda con otro contenido */
-    padding: 3px 8px;
-    background-color: var(--primario); /* Usa tu color primario */
-    color: var(--blanco);
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease;
-}
-
-.view-in-notion-link:hover {
-    background-color: darken(var(--primario), 10%); /* Oscurece el color al pasar el ratón */
-    /* Nota: darken() es una función de preprocesador (ej. Sass/Less), si usas CSS puro, calcula el color manualmente */
-    /* Si usas CSS puro, puedes usar un color fijo o HSL/RGBA para oscurecer */
-}
+ /* Añade más clases si tienes otros estatus en Notion */
+ /* Asegúrate de que la clase coincida con el nombre del estatus en minúsculas y con guiones */
+ /* por ejemplo, "En Revisión" -> status-en-revision */
+ 
+ /* Estilo para los enlaces "Ver" */
+ .view-in-notion-link {
+     display: inline-block;
+     margin-top: 5px; /* Espacio si está en una celda con otro contenido */
+     padding: 3px 8px;
+     background-color: var(--primario); /* Usa tu color primario */
+     color: var(--blanco);
+     text-decoration: none;
+     border-radius: 4px;
+     font-size: 0.9em;
+     transition: background-color 0.3s ease;
+ }
+ 
+ .view-in-notion-link:hover {
+     background-color: darken(var(--primario), 10%); /* Oscurece el color al pasar el ratón */
+     /* Nota: darken() es una función de preprocesador (ej. Sass/Less), si usas CSS puro, calcula el color manualmente */
+     /* Si usas CSS puro, puedes usar un color fijo o HSL/RGBA para oscurecer */
+ }
+ 
