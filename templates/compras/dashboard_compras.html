@@ -1,4 +1,4 @@
-{# templates/compras/dashboard.html (CORREGIDO para mostrar datos de Notion) #}
+{# templates/compras/dashboard.html (CORREGIDO para mostrar datos de Notion y detalles de Partida) #}
 
 {% extends 'base.html' %}
 
@@ -43,15 +43,13 @@
                     <thead>
                         <tr>
                             <th>Folio</th>
-                            <th>Proveedor</th>
-                            <th>Nombre del solicitante</th> {# Nueva columna para Nombre del solicitante #}
-                            <th>Partida</th> {# Nueva columna para Partida #}
-                            <th>Cantidad</th>
-                            <th>Fecha Solicitud</th>
-                            <th>Proyecto</th> {# Mostrará 'Vinculado' si tiene relación #}
+                            <th>Fecha de solicitud</th>
+                            <th>Nombre del solicitante</th>
                             <th>Departamento</th>
+                            <th>Partida</th> {# Esta columna ahora intentará mostrar el código completo #}
+                            <th>Cantidad</th>
+                            <th>Proveedor</th>
                             <th>Estatus Actual</th> {# Columna para mostrar el estatus actual #}
-                            <th>Especificaciones</th>
                             <th>Actualizar Estatus</th> {# Nueva columna para el select de actualización #}
                             <th>Acciones</th> {# Columna para enlaces/botones adicionales #}
                         </tr>
@@ -62,9 +60,9 @@
 
                             {# --- Mostrar datos reales de Notion en las celdas --- #}
 
-                            {# Folio (Asumiendo Rich Text o Title) #}
+                            {# <td> para Folio #}
                             <td>
-                                {% set folio_prop = solicitud.properties.get('Folio de solicitud') %} {# <-- Usa el nombre EXACTO de la propiedad Folio #}
+                                {% set folio_prop = solicitud.properties.get('Folio de solicitud') %}
                                 {% if folio_prop and (folio_prop.type == 'rich_text' or folio_prop.type == 'title') %}
                                     {% for text_part in folio_prop.get(folio_prop.type, []) %}
                                         {{ text_part.text.content }}
@@ -74,19 +72,19 @@
                                 {% endif %}
                             </td>
 
-                            {# Proveedor (Asumiendo Select) #}
+                            {# <td> para Fecha de solicitud (Formato YYYY-MM-DD) #}
                             <td>
-                                {% set proveedor_prop = solicitud.properties.get('Proveedor') %} {# <-- Usa el nombre EXACTO de la propiedad Proveedor #}
-                                {% if proveedor_prop and proveedor_prop.type == 'select' and proveedor_prop.select %}
-                                    {{ proveedor_prop.select.name }}
+                                {% set fecha_prop = solicitud.properties.get('Fecha de solicitud') %}
+                                {% if fecha_prop and fecha_prop.type == 'date' and fecha_prop.date and fecha_prop.date.start %}
+                                     {{ fecha_prop.date.start.split('T')[0] if 'T' in fecha_prop.date.start else fecha_prop.date.start }}
                                 {% else %}
-                                    N/A
+                                     N/A
                                 {% endif %}
                             </td>
 
-                            {# Nombre del solicitante (Asumiendo Select) #}
+                            {# <td> para Nombre del solicitante #}
                             <td>
-                                {% set solicitante_prop = solicitud.properties.get('Nombre del solicitante') %} {# <-- Usa el nombre EXACTO de la propiedad Nombre del solicitante #}
+                                {% set solicitante_prop = solicitud.properties.get('Nombre del solicitante') %}
                                 {% if solicitante_prop and solicitante_prop.type == 'select' and solicitante_prop.select %}
                                     {{ solicitante_prop.select.name }}
                                 {% else %}
@@ -94,53 +92,9 @@
                                 {% endif %}
                             </td>
 
-                             {# Partida (Asumiendo Relation) #}
+                            {# <td> para Departamento #}
                             <td>
-                                {% set partida_prop = solicitud.properties.get('Partida') %} {# <-- Usa el nombre EXACTO de la propiedad Partida #}
-                                {% if partida_prop and partida_prop.type == 'relation' and partida_prop.relation %}
-                                     Vinculado ({{ partida_prop.relation | length }}) {# Muestra "Vinculado (1)" si hay una relación #}
-                                     {# Para mostrar el nombre de la partida, necesitas modificar la lógica en compras.py #}
-                                {% else %}
-                                     Sin vincular {# O N/A #}
-                                {% endif %}
-                            </td>
-
-                            {# Cantidad (Asumiendo Number) #}
-                            <td>
-                                {% set cantidad_prop = solicitud.properties.get('Cantidad solicitada') %} {# <-- Usa el nombre EXACTO #}
-                                {% if cantidad_prop is not none and cantidad_prop.type == 'number' and cantidad_prop.number is not none %} {# Check explicitamente for none #}
-                                     {{ cantidad_prop.number }}
-                                {% else %}
-                                     0 {# O N/A, según lo que prefieras para cantidad 0/null #}
-                                {% endif %}
-                            </td>
-
-                            {# Fecha Solicitud (Asumiendo Date) #}
-                            <td>
-                                {% set fecha_prop = solicitud.properties.get('Fecha de solicitud') %} {# <-- Usa el nombre EXACTO #}
-                                {% if fecha_prop and fecha_prop.type == 'date' and fecha_prop.date and fecha_prop.date.start %}
-                                     {# Mostrar solo la parte de la fecha (YYYY-MM-DD) #}
-                                     {{ fecha_prop.date.start.split('T')[0] if 'T' in fecha_prop.date.start else fecha_prop.date.start }}
-                                {% else %}
-                                     N/A
-                                {% endif %}
-                            </td>
-
-                            {# Proyecto (Asumiendo Relation) #}
-                            <td>
-                                {% set proyecto_prop = solicitud.properties.get('Proyecto') %} {# <-- Usa el nombre EXACTO de la propiedad Relation en Materiales #}
-                                {% if proyecto_prop and proyecto_prop.type == 'relation' and proyecto_prop.relation %}
-                                     {# Solo podemos saber que hay una relación(es), no el nombre(s) del proyecto sin consulta adicional #}
-                                     Vinculado ({{ proyecto_prop.relation | length }}) {# Muestra "Vinculado (1)" si hay una relación #}
-                                     {# Para mostrar el nombre del proyecto, necesitas modificar la lógica en compras.py #}
-                                {% else %}
-                                     Sin vincular {# O N/A #}
-                                {% endif %}
-                            </td>
-
-                            {# Departamento (Asumiendo Select) #}
-                            <td>
-                                {% set departamento_prop = solicitud.properties.get('Departamento/Área') %} {# <-- Usa el nombre EXACTO #}
+                                {% set departamento_prop = solicitud.properties.get('Departamento/Área') %}
                                 {% if departamento_prop and departamento_prop.type == 'select' and departamento_prop.select %}
                                      {{ departamento_prop.select.name }}
                                 {% else %}
@@ -148,51 +102,70 @@
                                 {% endif %}
                             </td>
 
-                            {# Estatus Actual (Este ya estaba correcto, asumiendo que la propiedad se llama 'Estatus' y es Select) #}
+                            {# <td> para Partida (Modificado para mostrar el código completo sin viñetas) #}
+                                <td>
+                                    {% set partida_details = solicitud.get('partida_details', []) %} {# Asumimos que Python añadió esta clave #}
+                                    {% if partida_details %}
+                                        {# Unir los títulos de las partidas relacionadas en una sola cadena #}
+                                        {{ partida_details | map(attribute='title') | join(', ') }}
+                                    {% elif solicitud.properties.get('Partida') and solicitud.properties.get('Partida').get('relation') is not none %}
+                                        {# Si la propiedad de relación existe pero no se pudieron cargar los detalles en Python #}\
+                                        Detalles de Partida no disponibles
+                                    {% else %}
+                                        {# Si la propiedad de relación no existe o no tiene relaciones #}\
+                                        Sin vincular
+                                    {% endif %}
+                                </td>
+    
+
+                            {# <td> para Cantidad #}
+                            <td>
+                                {% set cantidad_prop = solicitud.properties.get('Cantidad solicitada') %}
+                                {% if cantidad_prop is not none and cantidad_prop.type == 'number' and cantidad_prop.number is not none %}
+                                     {{ cantidad_prop.number }}
+                                {% else %}
+                                     0
+                                {% endif %}
+                            </td>
+
+                            {# <td> para Proveedor #}
+                            <td>
+                                {% set proveedor_prop = solicitud.properties.get('Proveedor') %}
+                                {% if proveedor_prop and proveedor_prop.type == 'select' and proveedor_prop.select %}
+                                    {{ proveedor_prop.select.name }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+
+                            {# <td> para Estatus Actual #}
                             <td class="solicitud-estatus-celda" data-page-id="{{ solicitud.id }}">
-                                {% set estatus_prop = solicitud.properties.get('Estatus') %} {# <-- CONFIRMA que tu propiedad de Estatus se llama EXACTAMENTE 'Estatus' #}
+                                {% set estatus_prop = solicitud.properties.get('Estatus') %}
                                 {% if estatus_prop and estatus_prop.type == 'select' and estatus_prop.select %}
-                                    {# Obtén el nombre del estatus #}
                                     {% set raw_estatus_name = estatus_prop.select.name %}
-                                    {# Formatea el nombre para usarlo en una clase CSS: minúsculas, espacios a guiones #}
-                                    {% set estatus_name_class = raw_estatus_name | lower | replace(' ', '-') | replace('/', '-') %} {# Añadir manejo de '/' si aplica #}
+                                    {% set estatus_name_class = raw_estatus_name | lower | replace(' ', '-') | replace('/', '-') %}
                                     <span class="current-estatus-text status-badge status-{{ estatus_name_class }}">
-                                        {{ raw_estatus_name }} {# Muestra el nombre original #}
+                                        {{ raw_estatus_name }}
                                     </span>
                                 {% else %}
-                                    <span class="current-estatus-text">N/A</span> {# Sin clase de badge si es N/A #}
+                                    <span class="current-estatus-text">N/A</span>
                                 {% endif %}
                             </td>
 
-                            {# Especificaciones (Asumiendo Rich Text) #}
-                            <td>
-                                {% set especificaciones_prop = solicitud.properties.get('Especificaciones adicionales') %} {# <-- Usa el nombre EXACTO #}
-                                 {% if especificaciones_prop and especificaciones_prop.type == 'rich_text' %}
-                                     {% for text_part in especificaciones_prop.get('rich_text', []) %}
-                                         {{ text_part.text.content }}
-                                     {% endfor %}
-                                {% else %}
-                                     N/A
-                                {% endif %}
-                            </td>
-
-                            {# Celda para el control de actualización de estatus (Este no cambia, la lógica es con JS POST) #}
+                            {# <td> para Actualizar Estatus #}
                             <td>
                                 <select class="update-estatus-select">
                                     <option value="" selected disabled>Cambiar Estatus</option>
-                                    {# Opciones de estatus: Deben coincidir con las opciones de tu propiedad 'Estatus' en Notion #}
                                     <option value="Pendiente">Pendiente</option>
                                     <option value="En Proceso">En Proceso</option>
                                     <option value="Completada">Completada</option>
                                     <option value="Cancelada">Cancelada</option>
-                                    {# ¡IMPORTANTE! Añade/modifica estas opciones según las que realmente existen en tu DB Notion #}
                                 </select>
                             </td>
 
-                            {# Celda para acciones adicionales #}
+                            {# <td> para Acciones #}
                             <td>
-                                <a href="{{ solicitud.url }}" target="_blank" rel="noopener noreferrer" class="view-in-notion-link">Ver</a> {# <-- Usa solicitud.url, ya estaba correcto #}
-                                {# Puedes añadir otros botones/enlaces aquí #}
+                                <a href="{{ solicitud.url }}" target="_blank" rel="noopener noreferrer" class="view-in-notion-link">Ver</a>
                             </td>
 
                         </tr>

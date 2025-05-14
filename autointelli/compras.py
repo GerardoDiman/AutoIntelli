@@ -18,35 +18,76 @@ compras_bp = Blueprint('compras', __name__, url_prefix='/compras')
 @role_required(['compras', 'admin'])
 def compras_dashboard():
     logger.info(f"[{current_user.username}] Solicitud GET recibida en /compras/ (Compras Dashboard)")
-    # ... (lógica para cargar solicitudes existentes y pasar a la plantilla) ...
 
     notion_client = current_app.notion_client
     database_id_solicitudes_compras = current_app.config.get('DATABASE_ID_MATERIALES_DB1') # O la DB relevante para Compras
+    database_id_partidas = current_app.config.get('DATABASE_ID_PARTIDAS') # Obtener el ID de la base de datos de Partidas
 
     solicitudes = []
     error_msg = None
 
-    if notion_client and database_id_solicitudes_compras:
+    if not notion_client:
+        error_msg = "Cliente Notion no inicializado."
+        logger.error(f"[{current_user.username}] {error_msg}")
+        flash(error_msg, "danger")
+    elif not database_id_solicitudes_compras:
+        error_msg = "DATABASE_ID_MATERIALES_DB1 no está configurado."
+        logger.error(f"[{current_user.username}] {error_msg}")
+        flash(error_msg, "danger")
+    elif not database_id_partidas:
+        error_msg = "DATABASE_ID_PARTIDAS no está configurado."
+        logger.error(f"[{current_user.username}] {error_msg}")
+        flash(error_msg, "danger")
+    else:
          try:
               # Define los filtros relevantes para Compras (ej: ver todas, o filtrar por estatus)
               filters_for_compras = [] # Ejemplo: Obtener todas las solicitudes (sin filtros)
-              # filters_for_compras = build_filter_from_properties_util(...) # Si necesitas filtros por defecto
-
 
               logger.info(f"[{current_user.username}] Compras: Filters built: {filters_for_compras if filters_for_compras else 'Ninguno'}")
 
               solicitudes = get_pages_with_filter_util(notion_client, database_id_solicitudes_compras, filters_for_compras)
               logger.info(f"[{current_user.username}] Compras: Obtenidas {len(solicitudes)} solicitudes para Compras con filtros.")
 
+              # --- Lógica para obtener detalles de las Partidas relacionadas ---
+              for solicitud in solicitudes:
+                  partida_details_list = []
+                  # Acceder a la propiedad 'properties' y luego a la propiedad 'Partida'
+                  partida_prop = solicitud.get('properties', {}).get('Partida')
+
+                  if partida_prop and partida_prop.get('type') == 'relation' and partida_prop.get('relation'):
+                      relation_ids = [rel.get('id') for rel in partida_prop.get('relation')]
+                      logger.debug(f"Solicitud {solicitud.get('id')}: Encontradas {len(relation_ids)} relaciones de Partida: {relation_ids}")
+
+                      for related_page_id in relation_ids:
+                          try:
+                              # Obtener los detalles de la página de Partida relacionada
+                              related_page = notion_client.pages.retrieve(related_page_id)
+                              # Extraer la propiedad 'ID de partida' de la página relacionada
+                              partida_id_prop = related_page.get('properties', {}).get('ID de partida')
+
+                              if partida_id_prop and (partida_id_prop.get('type') == 'rich_text' or partida_id_prop.get('type') == 'title'):
+                                  # Concatenar el texto de las partes de rich_text/title
+                                  partida_code = "".join([text_part.get('text', {}).get('content', '') for text_part in partida_id_prop.get(partida_id_prop.get('type'), [])])
+                                  partida_details_list.append({'id': related_page_id, 'title': partida_code}) # Añadir ID y título
+
+                              else:
+                                  logger.warning(f"Partida relacionada con ID {related_page_id} no tiene una propiedad 'ID de partida' válida o es de un tipo inesperado.")
+                                  partida_details_list.append({'id': related_page_id, 'title': 'Título no disponible'}) # Añadir placeholder
+
+                          except Exception as e:
+                              logger.error(f"Error al obtener detalles de Partida relacionada con ID {related_page_id}: {e}", exc_info=True)
+                              partida_details_list.append({'id': related_page_id, 'title': 'Error al cargar detalles'}) # Añadir placeholder de error
+
+                  # Añadir la lista de detalles de partidas a la solicitud
+                  solicitud['partida_details'] = partida_details_list
+
+              # --- Fin de la lógica para obtener detalles de Partidas ---
+
+
          except Exception as e:
               error_msg = f"Error al cargar solicitudes de Notion para Compras: {e}"
               logger.error(f"[{current_user.username}] {error_msg}", exc_info=True)
               flash(error_msg, "danger")
-    else:
-         error_msg = "La integración con Notion para Compras no está configurada correctamente (Cliente Notion o DATABASE_ID_MATERIALES_DB1)."
-         logger.warning(f"[{current_user.username}] {error_msg}")
-         flash(error_msg, "warning")
-
 
     return render_template('compras/dashboard_compras.html', solicitudes=solicitudes)
 

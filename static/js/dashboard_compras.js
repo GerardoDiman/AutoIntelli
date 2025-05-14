@@ -1,200 +1,142 @@
 // static/js/dashboard_compras.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Referencias a elementos DOM ---
-    const solicitudesTable = document.getElementById('solicitudes-table-compras'); // La tabla de solicitudes de Compras
-    // Referencia al div donde mostraremos los mensajes de feedback de AJAX
-    const updateFeedbackDiv = document.getElementById('compras-update-feedback');
 
+    // --- Funcionalidad de Actualización de Estatus ---
 
-    // --- Event Listeners ---
+    // Seleccionar todos los elementos select con la clase 'update-estatus-select'
+    const statusSelects = document.querySelectorAll('.update-estatus-select');
 
-    // Añadir listener a la tabla para delegar eventos de los selects de estatus
-    if (solicitudesTable) {
-        solicitudesTable.addEventListener('change', function(event) {
-            const target = event.target;
+    statusSelects.forEach(selectElement => {
+        selectElement.addEventListener('change', function() {
+            // 'this' se refiere al elemento select que disparó el evento
+            const select = this;
+            // Obtener el page_id de la fila padre (<tr>)
+            const row = select.closest('tr');
+            const pageId = row.dataset.pageId; // Obtener el page_id del atributo data-page-id
+            const newStatus = select.value; // Obtener el nuevo valor seleccionado
 
-            // Verificar si el elemento que disparó el evento es un select con clase 'update-estatus-select'
-            if (target.classList.contains('update-estatus-select')) {
-                const selectElement = target;
-                const newStatus = selectElement.value; // Obtener el nuevo estatus seleccionado
-                const row = selectElement.closest('tr'); // Obtener la fila (tr) a la que pertenece este select
-                const pageId = row ? row.getAttribute('data-page-id') : null; // Obtener el page-id del atributo data-page-id de la fila
+            console.log(`Intentando actualizar estatus para Page ID: ${pageId} a ${newStatus}`);
 
-                // --- Nuevo: Obtener el Folio de la solicitud de la primera celda (asumiendo que es la primera) ---
-                // Necesitamos encontrar la celda del Folio dentro de la misma fila
-                const folioCell = row ? row.querySelector('td:first-child') : null; // Asume que el Folio está en la primera celda
-                const folioText = folioCell ? folioCell.textContent.trim() : 'Desconocido'; // Obtener el texto del Folio
+            // Deshabilitar el select temporalmente y quizás mostrar un indicador de carga
+            select.disabled = true;
+            select.style.cursor = 'wait'; // Cambiar cursor a espera
 
-
-                // Verificar que tenemos un page ID y un estatus seleccionado válido
-                if (pageId && newStatus) {
-                    console.log(`Intentando actualizar estatus para solicitud con Folio ${folioText} (Page ID: ${pageId}) a \"${newStatus}\"`);
-                    // Llamar a la función para enviar la solicitud de actualización, pasando el folio también
-                    updateSolicitudStatus(pageId, newStatus, row, folioText); // Pasar folioText
-                } else if (!newStatus) {
-                    console.log("Select de estatus cambiado, pero el valor es vacío o inválido.");
-                    // El usuario seleccionó la opción disabled/empty
-                    // Opcional: mostrar un mensaje al usuario en el div de feedback si es necesario
-                    if (updateFeedbackDiv) {
-                         updateFeedbackDiv.textContent = "Por favor, selecciona un estatus válido.";
-                         updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-                         updateFeedbackDiv.classList.add('feedback-message', 'info'); // Clase info para mensajes informativos
-                         hideFeedbackMessage(); // Ocultar después de un tiempo
+            // Opcional: Encontrar la celda del estatus actual para mostrar un mensaje temporal
+            const currentStatusCell = row.querySelector('.solicitud-estatus-celda');
+             if (currentStatusCell) {
+                 // Guardar el contenido original para restaurar después
+                 const originalContent = currentStatusCell.innerHTML;
+                 currentStatusCell.innerHTML = '<span class="processing-text">Actualizando...</span>'; // Mostrar mensaje de "Actualizando..."
+                 // Usar un atributo para guardar el contenido original si quieres ser más robusto
+                 currentStatusCell.dataset.originalContent = originalContent;
+                 // Limpiar las clases de estado previas si existen
+                 currentStatusCell.querySelector('.current-estatus-text')?.classList.forEach(className => {
+                     if (className.startsWith('status-')) {
+                         currentStatusCell.querySelector('.current-estatus-text').classList.remove(className);
                      }
+                 });
+            }
 
-                } else {
-                    console.warn("No se pudo obtener page ID para actualizar estatus.");
-                    // Mostrar un mensaje de error en el div de feedback
-                    if (updateFeedbackDiv) {
-                        updateFeedbackDiv.textContent = "Error interno: No se pudo identificar la solicitud.";
-                        updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-                        updateFeedbackDiv.classList.add('feedback-message', 'error'); // Clase error
-                        hideFeedbackMessage(); // Ocultar después de un tiempo
+
+            // Preparar los datos para enviar
+            // Nota: El endpoint del backend espera un JSON con la estructura { "properties": { "Estatus": { "select": { "name": "Nuevo Estatus" } } } }
+            const data = {
+                properties: {
+                    "Estatus": { // Asegúrate de que "Estatus" coincide exactamente con el nombre de la propiedad en Notion
+                        "select": {
+                            "name": newStatus
+                        }
                     }
                 }
-            }
-        });
-    } else {
-        console.error("Tabla de solicitudes #solicitudes-table-compras no encontrada.");
-         // Mostrar un mensaje de error si la tabla no se encuentra
-         if (updateFeedbackDiv) {
-             updateFeedbackDiv.textContent = "Error: No se encontró la tabla de solicitudes.";
-             updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-             updateFeedbackDiv.classList.add('feedback-message', 'error'); // Clase error
-         }
-    }
+            };
 
-
-    // --- Funciones ---
-
-    // Función para enviar la solicitud de actualización de estatus via AJAX al backend
-    // Ahora recibe el folioText como argumento
-    function updateSolicitudStatus(pageId, newStatus, rowElement, folioText) {
-        const updateUrl = `/compras/update_solicitud_status/${pageId}`;
-
-        const propertiesToUpdate = {
-            // Asegúrate de que "Estatus" coincide con el nombre de la propiedad en tu DB Notion
-            // Si tu propiedad de estatus es tipo Status: {"Status": {"name": newStatus}}
-            "Estatus": {"select": {"name": newStatus}}
-        };
-
-        const requestBody = {
-            properties: propertiesToUpdate
-        };
-
-        // --- Mostrar indicador visual de carga y mensaje "Actualizando..." ---
-        if (rowElement) {
-             rowElement.classList.add('updating'); // Añadir clase CSS
-             const selectElement = rowElement.querySelector('.update-estatus-select');
-             if(selectElement) selectElement.disabled = true; // Deshabilitar el select
-             // Si ocultaste el texto de estatus antes, puedes mostrar algo como un spinner aquí
- }
-        // Mostrar mensaje en el div de feedback
-        if(updateFeedbackDiv) {
-            updateFeedbackDiv.textContent = `Actualizando estatus para solicitud con Folio ${folioText}...`;
-            updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-            updateFeedbackDiv.classList.add('feedback-message', 'processing'); // Clase processing para estilos de carga
-        }
-
-
-        fetch(updateUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
-        })
-        .then(response => {
-            // --- Ocultar indicador visual de carga y limpiar mensaje "Actualizando..." ---
-            if (rowElement) rowElement.classList.remove('updating');
-             // El select se re-habilita más abajo o en el catch si hay error
-
-            if (!response.ok) {
-                // Si la respuesta no es OK, lanzar error
-                return response.json().then(errData => {
-                     let msg = errData.error || `Error: ${response.status}`;
-                     if(errData.details) msg += `: ${errData.details}`;
-                     if(errData.notion_message) msg += ` (Notion: ${errData.notion_message})`;
-                     throw new Error(msg);
-                }).catch(() => {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                });
-            }
-            // Si la respuesta es OK, procesar éxito
-            return response.json();
-        })
-        .then(data => {
-            console.log('Actualización exitosa:', data);
-            // Actualizar la UI de la fila en el frontend
-            if (rowElement) {
-                const statusCell = rowElement.querySelector('.solicitud-estatus-celda');
-                if (statusCell) {
-                    const statusTextSpan = statusCell.querySelector('.current-estatus-text');
-                    if(statusTextSpan) {
-                        statusTextSpan.textContent = newStatus; // Actualizar el texto del estatus
-                        // --- Opcional: Actualizar clases CSS en el span para reflejar el nuevo estatus ---
-                        // Esto requiere que tengas clases CSS definidas como .status-pendiente, .status-en-proceso, etc.
-                        const currentStatusClass = statusTextSpan.className.split(' ').find(cls => cls.startsWith('status-'));
-                        if (currentStatusClass) {
-                            statusTextSpan.classList.remove(currentStatusClass);
-                        }
-                         const newStatusClass = `status-${newStatus.toLowerCase().replace(/\s+/g, '-').replace('/', '-')}`;
-                         statusTextSpan.classList.add(newStatusClass);
-                     }
+            // Realizar la solicitud AJAX (fetch API)
+            fetch(`/compras/update_solicitud_status/${pageId}`, { // Asegúrate de que la URL coincide con tu ruta Flask
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                // Verificar si la respuesta HTTP fue exitosa (status 2xx)
+                if (!response.ok) {
+                     // Si no es exitosa, lanzar un error con el estado y el mensaje de respuesta
+                     return response.json().then(errorData => {
+                         const errorMessage = errorData.error || `Error de servidor (Status: ${response.status})`;
+                         const notionErrorDetails = errorData.notion_error_details ? ` Detalles: ${JSON.stringify(errorData.notion_error_details)}` : '';
+                         throw new Error(`${errorMessage}${notionErrorDetails}`);
+                     }).catch(() => {
+                         // Si no se puede parsear el JSON de error, usar un mensaje genérico
+                          throw new Error(`Error de servidor (Status: ${response.status}). No se pudo obtener el detalle del error.`);
+                     });
                 }
-                 // Re-habilitar el select y resetear su valor
-                const selectElement = rowElement.querySelector('.update-estatus-select');
-                if(selectElement) {
-                    selectElement.value = ""; // Resetear al valor por defecto "Cambiar Estatus"
-                    selectElement.disabled = false; // Re-habilitar
-                }
-            }
+                // Si es exitosa, parsear el JSON de la respuesta
+                return response.json();
+            })
+            .then(data => {
+                // Manejar la respuesta exitosa del backend
+                console.log('Actualización exitosa:', data);
+                // Mostrar mensaje de éxito al usuario (opcional, en un div dedicado o como flash message)
+                // alert('Estatus actualizado correctamente!'); // Usa algo mejor que alert en producción
+                const feedbackDiv = document.getElementById('compras-update-feedback');
+                 if (feedbackDiv) {
+                     feedbackDiv.textContent = data.message || 'Actualización exitosa.';
+                     feedbackDiv.style.color = 'green';
+                     // Limpiar mensaje después de unos segundos
+                     setTimeout(() => { feedbackDiv.textContent = ''; }, 5000);
+                 }
 
-            // --- Mostrar mensaje de éxito en el div de feedback ---
-            if(updateFeedbackDiv) {
-                // data.message podría venir del backend con un mensaje más específico
-                const successMessage = data.message || `Estatus actualizado a \"${newStatus}\"`;
-                updateFeedbackDiv.textContent = `Solicitud con Folio ${folioText}: ${successMessage}`;
-                updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-                updateFeedbackDiv.classList.add('feedback-message', 'success'); // Clase success
-                hideFeedbackMessage(); // Ocultar después de un tiempo
-            }
+                // Actualizar la visualización del estatus actual en la tabla
+                 if (currentStatusCell) {
+                    // Restaurar el contenido original si lo guardaste o crear el nuevo badge
+                    // Una forma más robusta es actualizar el contenido basado en el nuevo estatus seleccionado:
+                    const newStatusText = newStatus; // El texto a mostrar es el nuevo estatus seleccionado
+                    const newStatusClass = newStatusText.toLowerCase().replace(' ', '-').replace('/', '-');
+                    currentStatusCell.innerHTML = `<span class="current-estatus-text status-badge status-${newStatusClass}">${newStatusText}</span>`;
+                 }
 
-        })
-        .catch(error => {
-            console.error('Error al actualizar estatus via AJAX:', error);
-            // --- Ocultar indicador visual de carga y mostrar mensaje de error ---
-            if (rowElement) rowElement.classList.remove('updating');
-             // Re-habilitar el select en caso de error
-             const selectElement = rowElement ? rowElement.querySelector('.update-estatus-select') : null;
-             if(selectElement) selectElement.disabled = false;
+                // Opcional: Deshabilitar el select o restablecerlo a la opción por defecto "Cambiar Estatus"
+                select.disabled = false; // Habilitar select
+                select.style.cursor = 'pointer'; // Restaurar cursor
+                select.value = ""; // Restablecer a la opción "Cambiar Estatus"
+
+            })
+            .catch(error => {
+                // Manejar errores de la solicitud o del backend
+                console.error('Error en la actualización:', error);
+                // Mostrar mensaje de error al usuario
+                 const feedbackDiv = document.getElementById('compras-update-feedback');
+                 if (feedbackDiv) {
+                     feedbackDiv.textContent = `Error al actualizar: ${error.message || 'Error desconocido.'}`;
+                     feedbackDiv.style.color = 'red';
+                      // Limpiar mensaje después de unos segundos
+                     setTimeout(() => { feedbackDiv.textContent = ''; }, 10000); // Dejar mensaje de error más tiempo
+                 }
 
 
-            // Mostrar mensaje de error en el div de feedback
-            if(updateFeedbackDiv) {
-                const errorMessage = error.message || 'Error desconocido al actualizar estatus.';
-                updateFeedbackDiv.textContent = `Error al actualizar estatus para solicitud con Folio ${folioText}: ${errorMessage}`;
-                updateFeedbackDiv.className = ''; // Limpiar clases anteriores
-                updateFeedbackDiv.classList.add('feedback-message', 'error'); // Clase error
-                hideFeedbackMessage(); // Ocultar después de un tiempo
-            }
+                // Restaurar el select y la celda de estatus si es necesario
+                select.disabled = false; // Habilitar select
+                select.style.cursor = 'pointer'; // Restaurar cursor
+                 if (currentStatusCell && currentStatusCell.dataset.originalContent) {
+                    // Restaurar el contenido original que guardaste
+                    currentStatusCell.innerHTML = currentStatusCell.dataset.originalContent;
+                    // Limpiar el atributo dataset
+                    delete currentStatusCell.dataset.originalContent;
+                 } else if (currentStatusCell) {
+                     // Si no se pudo restaurar el contenido original, al menos mostrar un indicador de error
+                     currentStatusCell.innerHTML = '<span class="error-text">Error</span>';
+                 }
+
+                 // Opcional: Restablecer el select a su valor original antes del intento de actualización
+                 // Esto requeriría almacenar el valor original antes del cambio, lo cual añade complejidad.
+                 // Por ahora, simplemente se habilita el select.
+            });
         });
-    }
+    });
 
-    // --- Nueva función para ocultar el mensaje de feedback ---
-    let feedbackTimer;
-    function hideFeedbackMessage() {
-        // Limpiar cualquier temporizador anterior
-        clearTimeout(feedbackTimer);
-        // Establecer un nuevo temporizador para limpiar el texto después de 5 segundos (5000 ms)
-        feedbackTimer = setTimeout(() => {
-            if (updateFeedbackDiv) {
-                updateFeedbackDiv.textContent = ''; // Limpiar el texto
-                updateFeedbackDiv.className = ''; // Limpiar las clases
-            }
-        }, 5000); // Tiempo en milisegundos (5 segundos)
-    }
+    // --- Funcionalidad Adicional (si la hay) ---
+    // Puedes añadir aquí más listeners de eventos o lógica de JavaScript que necesites para el dashboard de compras.
 
-
-}); // Fin DOMContentLoaded
+}); // Fin de DOMContentLoaded
